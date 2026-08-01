@@ -241,7 +241,9 @@
     const collage = $("[data-hero-collage]");
     if (!collage) return;
     const images = $$(`[data-hero-collage-image]`, collage);
+    const layouts = ["0", "1", "2", "3"];
     let offset = 0;
+    let layout = 0;
     const update = () => {
       collage.classList.add("is-changing");
       window.setTimeout(() => {
@@ -250,6 +252,8 @@
           image.src = photo.src;
           image.alt = photo.alt;
         });
+        layout = (layout + 1) % layouts.length;
+        collage.dataset.layout = layouts[layout];
         collage.classList.remove("is-changing");
       }, 260);
       offset = (offset + 1) % allPhotos.length;
@@ -505,6 +509,21 @@
     });
   };
 
+  const setupSectionPosters = () => {
+    const posterSets = [[1, 6, 10], [3, 8, 14], [5, 11, 18], [7, 13, 22]];
+    if (!$("main")) return;
+    $$('main > section').forEach((section, sectionIndex) => {
+      if (section.querySelector(".section-posters")) return;
+      const selected = posterSets[sectionIndex % posterSets.length];
+      section.dataset.posterLayout = String(sectionIndex % 3);
+      const posters = selected.map((photoIndex, posterIndex) => {
+        const photo = allPhotos[(photoIndex + sectionIndex * 2) % allPhotos.length];
+        return `<span class="poster-frame poster-frame-${posterIndex + 1}"><img src="${photo.src}" alt="" loading="lazy" decoding="async" /></span>`;
+      }).join("");
+      section.insertAdjacentHTML("afterbegin", `<div class="section-posters" aria-hidden="true">${posters}</div>`);
+    });
+  };
+
   const setupImageLoading = () => {
     $$('img:not(.hero-collage img)').forEach((image) => {
       if (image.dataset.loadingBound) return;
@@ -517,5 +536,5 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupNavHighlight(); setupImageLoading();
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupNavHighlight(); setupSectionPosters(); setupImageLoading();
 })();
