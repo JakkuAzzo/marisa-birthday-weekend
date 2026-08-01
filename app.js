@@ -224,16 +224,17 @@
     const target = new Date("2026-08-21T09:00:00+01:00").getTime();
     const node = $("[data-countdown]");
     if (!node) return;
-    if (!node) return;
     const update = () => {
       const difference = target - Date.now();
       if (difference <= 0) { node.textContent = "It’s birthday weekend!"; return; }
-      const days = Math.floor(difference / 86400000);
-      const hours = Math.floor((difference % 86400000) / 3600000);
-      const minutes = Math.floor((difference % 3600000) / 60000);
-      node.textContent = `${days}d ${hours}h ${minutes}m to go`;
+      const totalSeconds = Math.floor(difference / 1000);
+      const days = Math.floor(totalSeconds / 86400);
+      const hours = Math.floor((totalSeconds % 86400) / 3600);
+      const minutes = Math.floor((totalSeconds % 3600) / 60);
+      const seconds = totalSeconds % 60;
+      node.textContent = `${days}d ${hours}h ${minutes}m ${seconds}s to go`;
     };
-    update(); window.setInterval(update, 60000);
+    update(); window.setInterval(update, 1000);
   };
 
   const setupPhotoRail = () => {
@@ -255,7 +256,7 @@
       }, 260);
       offset = (offset + 1) % allPhotos.length;
     };
-    window.setInterval(update, 4200);
+    window.setInterval(update, 5000);
   };
 
   const setupMenu = () => {
