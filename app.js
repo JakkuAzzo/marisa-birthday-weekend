@@ -389,6 +389,7 @@
       input.accept = kind.value === "message" ? "" : `${kind.value}/*`;
       input.setAttribute("capture", captureMode);
       dropzone.querySelector("strong").textContent = kind.value === "message" ? "No file needed for a message" : `Choose or drop a ${kind.value}`;
+      dropzone.querySelector("span").textContent = kind.value === "message" ? "Written messages are shared instantly" : "Images, videos and voice notes · max 8MB each for free shared storage";
       if (kind.value !== "audio") recordedFile = null;
     };
     kind.addEventListener("change", refreshFileRequirement);
