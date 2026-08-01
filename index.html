@@ -10,10 +10,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <link rel="stylesheet" href="styles.css?v=5" />
+    <link rel="stylesheet" href="styles.css?v=6" />
     <script>document.documentElement.classList.add("is-gated");</script>
   </head>
-  <body>
+  <body class="page-home">
     <a class="skip-link" href="#main">Skip to content</a>
     <section class="gate-screen" data-gate-screen aria-labelledby="gate-title">
       <div class="gate-card">
@@ -45,12 +45,11 @@
           <span class="brand-label">BIRTHDAY WEEKEND</span>
         </a>
         <nav class="main-nav" aria-label="Main navigation">
-          <a class="is-active" href="#top">Home</a>
-          <a href="#plan">Plan</a>
-          <a href="#attendees">Attendees</a>
-          <a href="#notes">Notes</a>
-          <a href="#memories">Memories</a>
-          <a href="#details">Details</a>
+          <a class="is-active" href="index.html">Home</a>
+          <a href="plan.html">Plan</a>
+          <a href="rsvp.html">RSVP</a>
+          <a href="memories.html">Memories</a>
+          <a href="details.html">Details</a>
         </nav>
         <button class="date-pill" type="button" data-calendar-action="download" aria-label="Download the weekend calendar">
           <i class="ph ph-calendar-blank" aria-hidden="true"></i>
@@ -61,7 +60,7 @@
         </button>
       </header>
       <nav id="mobile-nav" class="mobile-nav" aria-label="Mobile navigation" data-mobile-nav>
-        <a href="#plan">Plan</a><a href="#attendees">Attendees</a><a href="#notes">Notes</a><a href="#memories">Memories</a><a href="#details">Details</a>
+        <a href="plan.html">Plan</a><a href="rsvp.html">RSVP</a><a href="memories.html">Memories</a><a href="details.html">Details</a>
       </nav>
 
       <main id="main">
@@ -72,8 +71,8 @@
             <p class="hero-intro">A long weekend to celebrate Marisa — good people, great places and even better memories.</p>
             <div class="date-card"><i class="ph ph-calendar-blank" aria-hidden="true"></i><span>21–24 August 2026</span></div>
             <div class="hero-actions">
-              <a class="button button-coral" href="#rsvp"><i class="ph ph-heart" aria-hidden="true"></i> RSVP + contribute</a>
-              <a class="button button-outline" href="#notes"><i class="ph ph-pencil-simple" aria-hidden="true"></i> Leave a note</a>
+              <a class="button button-coral" href="rsvp.html"><i class="ph ph-heart" aria-hidden="true"></i> RSVP + contribute</a>
+              <a class="button button-outline" href="memories.html"><i class="ph ph-pencil-simple" aria-hidden="true"></i> Leave a note</a>
             </div>
             <div class="countdown" aria-live="polite">
               <span class="countdown-label">The weekend begins in</span>
@@ -89,10 +88,24 @@
           </div>
         </section>
 
-        <section id="attendees" class="attendee-strip paper-section" aria-labelledby="attendees-title">
-          <div class="section-kicker handwritten" id="attendees-title">Who's in?</div>
-          <div class="attendee-list" data-attendees></div>
-          <a class="text-link" href="#rsvp">Tell us you're coming <i class="ph ph-arrow-right" aria-hidden="true"></i></a>
+        <section class="photo-rail paper-section" aria-labelledby="photo-rail-title">
+          <div class="photo-rail-heading">
+            <p class="eyebrow">THE CAMERA ROLL</p>
+            <h2 id="photo-rail-title">Keep the <em>good bits</em> moving.</h2>
+            <p>More moments from Marisa's archive, changing every few seconds while you plan the weekend.</p>
+          </div>
+          <div class="photo-rail-grid" data-photo-rail>
+            <figure class="photo-rail-card"><img data-photo-rail-image src="assets/photos/marisa-roses.jpeg" alt="Marisa holding roses beside the water" /><figcaption data-photo-rail-caption>The birthday girl</figcaption></figure>
+            <figure class="photo-rail-card"><img data-photo-rail-image src="assets/photos/marisa-nafe-food.jpeg" alt="Marisa and Nafe sharing food" /><figcaption data-photo-rail-caption>Food and fuss</figcaption></figure>
+            <figure class="photo-rail-card"><img data-photo-rail-image src="assets/photos/family-table.jpeg" alt="Family and friends gathered around a table" /><figcaption data-photo-rail-caption>Together</figcaption></figure>
+            <figure class="photo-rail-card"><img data-photo-rail-image src="assets/photos/marisa-bouquet.jpeg" alt="Marisa holding a bouquet beside the water" /><figcaption data-photo-rail-caption>Bouquet girl</figcaption></figure>
+            <figure class="photo-rail-card"><img data-photo-rail-image src="assets/photos/marisa-evening-city.jpeg" alt="Marisa by the river at dusk" /><figcaption data-photo-rail-caption>City lights</figcaption></figure>
+          </div>
+        </section>
+
+        <section class="home-links paper-section" aria-labelledby="home-links-title">
+          <div class="section-heading"><p class="eyebrow">TAKE YOUR PICK</p><h2 id="home-links-title">The weekend, <em>your way.</em></h2><p>Jump straight to the part you need — no endless scrolling required.</p></div>
+          <div class="home-links-grid"><a class="home-link-card" href="plan.html"><span class="handwritten">01</span><strong>See the plan</strong><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a><a class="home-link-card" href="rsvp.html"><span class="handwritten">02</span><strong>RSVP + costs</strong><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a><a class="home-link-card" href="memories.html"><span class="handwritten">03</span><strong>Leave a memory</strong><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a><a class="home-link-card" href="details.html"><span class="handwritten">04</span><strong>Open the details</strong><i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></div>
         </section>
 
         <section id="plan" class="plan-section paper-section" aria-labelledby="plan-title">
@@ -136,7 +149,7 @@
           <div class="section-heading reveal"><p class="eyebrow">KEEP IT SIMPLE</p><h2 id="details-title">The <em>details</em></h2><p>Choose only the bits you want to help with. Marisa's share is covered.</p></div>
           <div class="details-grid">
             <div class="contributions-panel reveal"><div class="panel-heading"><div><p class="eyebrow coral">SHARED COSTS</p><h3>Contribution desk</h3></div><span class="selected-total" data-selected-total>£0.00 selected</span></div><div class="contribution-list" data-contributions></div><div class="payment-summary"><div><span>Selected to pay</span><strong data-pay-total>£0.00</strong></div><button class="button button-dark" type="button" data-payment-action><i class="ph ph-lock-key" aria-hidden="true"></i> Pay selected securely</button></div><p class="tiny-note">Stripe links are kept in <code>config.js</code> so no secret key ever sits on this public page.</p></div>
-            <aside class="quick-links reveal reveal-delay"><div class="quick-link-card"><i class="ph ph-calendar-plus" aria-hidden="true"></i><div><h3>Shared calendar</h3><p>Download the full weekend as an .ics file or connect your shared calendar link.</p><button class="text-link" type="button" data-calendar-action="download">Download calendar <i class="ph ph-arrow-right" aria-hidden="true"></i></button></div></div><div class="quick-link-card"><i class="ph ph-map-pin-line" aria-hidden="true"></i><div><h3>Stay base</h3><p>Feltham / west London is the working base. Final address will be shared privately after booking.</p><a class="text-link" href="#rsvp">Add your overnight status <i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div></aside>
+            <aside class="quick-links reveal reveal-delay"><div class="quick-link-card"><i class="ph ph-calendar-plus" aria-hidden="true"></i><div><h3>Shared calendar</h3><p>Download the full weekend as an .ics file or connect your shared calendar link.</p><button class="text-link" type="button" data-calendar-action="download">Download calendar <i class="ph ph-arrow-right" aria-hidden="true"></i></button></div></div><div class="quick-link-card"><i class="ph ph-map-pin-line" aria-hidden="true"></i><div><h3>Stay base</h3><p>Feltham / west London is the working base. Final address will be shared privately after booking.</p><a class="text-link" href="rsvp.html">Add your overnight status <i class="ph ph-arrow-right" aria-hidden="true"></i></a></div></div></aside>
           </div>
         </section>
 
@@ -146,7 +159,7 @@
         </section>
 
         <section id="memories" class="memories-section paper-section" aria-labelledby="memories-title">
-          <div class="memories-intro reveal"><p class="eyebrow">THE MEMORY WALL</p><h2 id="memories-title">The best <em>people</em></h2><p>Share photos, videos, voice notes or a written message. Everything you add appears in the memory carousel below.</p><form class="memory-uploader" data-memory-form><div class="form-row"><div><label for="memory-name">Your name</label><input id="memory-name" name="name" type="text" placeholder="Your name" required /></div><div><label for="memory-kind">What are you sharing?</label><select id="memory-kind" name="kind"><option value="image">Photo</option><option value="video">Video</option><option value="audio">Voice note</option><option value="message">Written message</option></select></div></div><label for="memory-caption">Caption or message <span>(optional for media)</span></label><textarea id="memory-caption" name="caption" rows="3" placeholder="A memory, a wish, a voice-note caption…"></textarea><label class="upload-dropzone" for="memory-upload"><i class="ph ph-upload-simple" aria-hidden="true"></i><strong>Choose or drop a file</strong><span>Images, videos and voice notes · max 25MB each</span></label><input class="sr-only" id="memory-upload" name="file" type="file" accept="image/*,video/*,audio/*" data-upload-input /><button class="button button-coral" type="submit"><i class="ph ph-plus" aria-hidden="true"></i> Add to memories</button><p class="form-status" data-memory-status role="status"></p></form></div>
+          <div class="memories-intro reveal"><p class="eyebrow">THE MEMORY WALL</p><h2 id="memories-title">The best <em>people</em></h2><p>Share photos, videos, voice notes or a written message. Everything you add appears in the memory carousel below.</p><form class="memory-uploader" data-memory-form><div class="form-row"><div><label for="memory-name">Your name</label><input id="memory-name" name="name" type="text" placeholder="Your name" required /></div><div><label for="memory-kind">What are you sharing?</label><select id="memory-kind" name="kind"><option value="image">Photo</option><option value="video">Video</option><option value="audio">Voice note</option><option value="message">Written message</option></select></div></div><label for="memory-caption">Caption or message <span>(optional for media)</span></label><textarea id="memory-caption" name="caption" rows="3" placeholder="A memory, a wish, a voice-note caption…"></textarea><div class="capture-tools"><button class="capture-button" type="button" data-capture-photo><i class="ph ph-camera" aria-hidden="true"></i> Take a photo</button><button class="capture-button" type="button" data-capture-video><i class="ph ph-video-camera" aria-hidden="true"></i> Record a video</button><button class="capture-button" type="button" data-record-voice aria-pressed="false"><i class="ph ph-microphone" aria-hidden="true"></i> Record voice note <span data-record-timer>00:00</span></button></div><label class="upload-dropzone" for="memory-upload"><i class="ph ph-upload-simple" aria-hidden="true"></i><strong>Choose or drop a file</strong><span>Images, videos and voice notes · max 25MB each</span></label><input class="sr-only" id="memory-upload" name="file" type="file" accept="image/*,video/*,audio/*" data-upload-input /><button class="button button-coral" type="submit"><i class="ph ph-plus" aria-hidden="true"></i> Add to memories</button><p class="form-status" data-memory-status role="status"></p></form></div>
           <div class="memory-wall reveal reveal-delay"><div class="memory-wall-header"><div><p class="eyebrow coral">ARCHIVE + NEW UPLOADS</p><p class="memory-wall-meta" data-memory-meta>Showing the memory wall</p></div><div class="carousel-controls"><button class="icon-button" type="button" aria-label="Previous memories" data-memory-prev><i class="ph ph-arrow-left" aria-hidden="true"></i></button><button class="icon-button" type="button" aria-label="Next memories" data-memory-next><i class="ph ph-arrow-right" aria-hidden="true"></i></button></div></div><div class="memory-grid" data-memory-grid></div></div>
         </section>
       </main>

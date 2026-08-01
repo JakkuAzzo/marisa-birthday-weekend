@@ -8,7 +8,7 @@
 
 **Viewport:** 1512 × 861 CSS px; browser screenshot captured at the default desktop viewport. Source mockup is 1487 × 1058 px, so comparison focused on the shared above-the-fold composition rather than a pixel-normalized full-page comparison.
 
-**State:** Locked page, unlocked group page, and memory-wall states checked in Chrome. The birthday-girl page is date-gated and cannot be opened before 21 August 2026.
+**State:** Locked page, unlocked group page, separate page navigation, rotating photo rail, and memory capture controls checked in Chrome. The birthday-girl page is date-gated and cannot be opened before 21 August 2026.
 
 ## Findings
 
@@ -17,9 +17,10 @@ No actionable P0, P1 or P2 findings remain.
 - The aubergine hero, cream paper sections, coral accent, serif/script hierarchy, collage treatment, attendee strip, plan cards, and memory-wall structure all carry through from the approved direction.
 - The generated mockup's placeholder photography was intentionally replaced with Marisa's supplied personal photos.
 - The hero title was refined after the first comparison so “Birthday Weekend” stays on one desktop line, matching the source composition; mobile overrides allow normal wrapping.
-- The implementation adds real event-specific content and functional states beyond the source mockup: RSVP, shared-cost selection, calendar download, notes, image/video/voice-note/message upload UI, a paged five-column memory wall, and Stripe hooks.
-- All 41 supplied photo assets are referenced by the site; the memory wall currently presents 40 archive cards plus any new browser-local memories.
+- The implementation adds real event-specific content and functional states beyond the source mockup: separate pages, RSVP, shared-cost selection, calendar download, notes, image/video/voice-note/message capture UI, a paged five-column memory wall, and Stripe hooks.
+- All 41 supplied photo assets are referenced by the site; the rotating photo rail cycles through the archive every 4.2 seconds, while the memory wall presents 40 archive cards plus any new browser-local memories.
 - The casual password curtain and the birthday-only Marisa view are implemented before the main page becomes visible.
+- The assumed attendee strip and seeded RSVP records were removed; the confirmed RSVP feed is empty until backed by real responses.
 
 ## Primary interactions tested
 
@@ -29,11 +30,14 @@ No actionable P0, P1 or P2 findings remain.
 - Note submission: success state displayed and a note card appeared on the memory wall.
 - Calendar download action: download handler ran and success toast displayed.
 - Mobile viewport check at 390 × 844: mobile menu control and hero heading remained present.
-- Public URL check: `https://jakkuazzo.github.io/marisa-birthday-weekend/` loaded with the correct title and 23 images.
+- Public URL check: `https://jakkuazzo.github.io/marisa-birthday-weekend/` loaded with the correct title and locked first view.
 - Group password check: `happybirthday` hides the curtain and reveals the site; the live feed reports 6 current responses from `rsvps.json`.
 - Marisa code check: `210803` shows “nuh uhhhh you gotta wait silly billy” before 21 August and keeps the special page hidden.
 - Memory carousel check: next/previous controls move between 10-card pages and update the range metadata.
 - Memory upload check: the chooser opens from the visible drop zone. Chrome blocked attaching a local file because the extension's “Allow access to file URLs” permission is disabled; this is a browser setup limitation, not a site error.
+- Separate-page check: `plan.html`, `rsvp.html`, `memories.html`, and `details.html` each loaded with their own main content and shared gate/navigation.
+- Direct capture check: “Take a photo” opened a file chooser with `accept="image/*" capture="environment"`; switching to video changed it to `accept="video/*" capture="environment"`.
+- Voice-note check: the recorder button is present and requests microphone permission only after activation; permission was not accepted during QA.
 
 ## Console check
 
@@ -45,7 +49,7 @@ No site JavaScript errors were observed. Chrome reported extension-channel warni
 2. Widened the hero composition, reduced desktop display size, and added a desktop-only no-wrap rule for the italic title line.
 3. Added a versioned stylesheet URL so the corrected typography is not held behind an old browser cache.
 4. Final Chrome capture confirmed the title and collage composition at the public Pages URL.
-5. Added the password curtain, birthday-only Marisa view, live refreshable RSVP feed, full supplied photo archive, and memory carousel.
+5. Added the password curtain, birthday-only Marisa view, confirmed-only RSVP feed, full supplied photo archive, rotating photo rail, separate pages, and direct media capture controls.
 
 ## Implementation checklist
 

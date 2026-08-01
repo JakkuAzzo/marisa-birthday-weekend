@@ -57,6 +57,10 @@ body.is-marisa-mode .site-shell { display: none; }
 body.is-marisa-mode .gate-screen { display: none; }
 
 .site-header { position: absolute; z-index: 10; inset: 0 0 auto; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 30px; max-width: 1440px; margin: 0 auto; padding: 28px 5.5vw; color: var(--cream); }
+body:not(.page-home) .site-header { position: relative; max-width: none; background: var(--paper); color: var(--ink); border-bottom: 1px solid var(--line); }
+body:not(.page-home) .date-pill { border-color: var(--line); background: transparent; color: var(--ink); }
+body:not(.page-home) .menu-button { border-color: var(--line); color: var(--ink); }
+.page-section { min-height: calc(100vh - 100px); }
 .brand { display: inline-flex; flex-direction: column; line-height: .85; }
 .brand-script { font-family: var(--display); font-size: 27px; letter-spacing: -.04em; }
 .brand-label { margin-top: 9px; font-size: 9px; font-weight: 700; letter-spacing: .32em; }
@@ -105,6 +109,39 @@ h3 { margin-bottom: 12px; font-size: 27px; }
 .stamp strong { font-family: var(--display); font-size: 22px; letter-spacing: 0; }
 .collage-note { position: absolute; right: -6px; bottom: 56px; z-index: 3; width: 120px; padding: 15px; border-radius: 50%; background: var(--coral); color: var(--aubergine); font-family: var(--script); font-size: 18px; line-height: 1.02; text-align: center; transform: rotate(8deg); }
 .collage-note span { font-family: var(--sans); font-size: 11px; }
+
+.photo-rail { display: grid; grid-template-columns: 270px 1fr; align-items: center; gap: 5vw; padding: 40px 7vw; border-bottom: 1px solid var(--line); }
+.photo-rail-heading { max-width: 260px; }
+.photo-rail-heading h2 { margin-bottom: 12px; font-size: clamp(38px, 4vw, 58px); }
+.photo-rail-heading p:not(.eyebrow) { margin-bottom: 0; color: var(--muted); font-size: 14px; }
+.photo-rail-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 13px; transition: opacity .26s ease; }
+.photo-rail-grid.is-changing { opacity: .28; }
+.photo-rail-card { position: relative; margin: 0; overflow: hidden; padding: 8px 8px 12px; background: #fffaf1; box-shadow: 0 12px 22px rgba(50, 20, 38, .11); }
+.photo-rail-card:nth-child(2n) { transform: translateY(8px) rotate(1.6deg); }
+.photo-rail-card:nth-child(3n) { transform: rotate(-1.2deg); }
+.photo-rail-card img { height: 145px; object-fit: cover; }
+.photo-rail-card figcaption { padding: 8px 2px 0; color: var(--muted); font-family: var(--script); font-size: 20px; line-height: 1; }
+
+.home-links { padding: 76px 7vw 84px; }
+.home-links .section-heading { margin-bottom: 28px; }
+.home-links-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.home-link-card { display: grid; grid-template-columns: auto 1fr auto; align-items: end; gap: 12px; min-height: 130px; padding: 18px; border: 1px solid var(--line); background: var(--paper); transition: transform .2s ease, background .2s ease; }
+.home-link-card:hover, .home-link-card:focus-visible { background: var(--cream-deep); transform: translateY(-4px); }
+.home-link-card .handwritten { align-self: start; color: var(--coral-dark); font-size: 29px; }
+.home-link-card strong { font-family: var(--display); font-size: 23px; font-weight: 400; }
+.home-link-card i { color: var(--coral-dark); font-size: 20px; }
+
+body.page-home main > #plan,
+body.page-home main > #rsvp,
+body.page-home main > #details,
+body.page-home main > #notes,
+body.page-home main > #memories { display: none; }
+
+.capture-tools { display: grid; gap: 8px; margin: 14px 0; }
+.capture-button { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 42px; padding: 9px 12px; border: 1px solid var(--line); border-radius: 5px; background: transparent; color: var(--ink); font-size: 12px; font-weight: 700; text-align: left; }
+.capture-button:hover, .capture-button:focus-visible { border-color: var(--coral); color: var(--coral-dark); }
+.capture-button[aria-pressed="true"] { background: var(--coral); border-color: var(--coral); color: var(--aubergine); }
+.capture-button span { font-variant-numeric: tabular-nums; }
 
 .attendee-strip { display: grid; grid-template-columns: 150px 1fr auto; align-items: center; gap: 26px; padding: 22px 7vw; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
 .handwritten { font-family: var(--script); text-transform: none; font-size: 34px; line-height: 1; }
@@ -259,9 +296,10 @@ code { padding: 2px 4px; background: rgba(50, 20, 38, .08); }
   .hero { display: block; min-height: auto; padding: 130px 7vw 74px; }
   .hero-copy { position: relative; z-index: 2; }
   .hero-collage { min-height: 435px; margin: 34px 0 0; transform: none; }
-  .attendee-strip { grid-template-columns: 1fr auto; gap: 12px; padding: 22px 7vw; }
-  .attendee-list { grid-column: 1 / -1; grid-row: 2; overflow: hidden; }
-  .attendee { flex: 0 0 61px; }
+  .photo-rail { grid-template-columns: 1fr; gap: 20px; }
+  .photo-rail-heading { max-width: 430px; }
+  .photo-rail-grid { grid-template-columns: repeat(5, minmax(120px, 1fr)); overflow: hidden; }
+  .home-links-grid { grid-template-columns: repeat(2, 1fr); }
   .plan-grid, .details-grid { grid-template-columns: 1fr; }
   .rsvp-section, .notes-section { grid-template-columns: 1fr; gap: 34px; padding-inline: 9vw; }
   .memories-section { grid-template-columns: 1fr; gap: 28px; }
@@ -285,9 +323,12 @@ code { padding: 2px 4px; background: rgba(50, 20, 38, .08); }
   .stamp { top: -2px; right: 3%; width: 72px; height: 72px; font-size: 6px; }
   .stamp strong { font-size: 16px; }
   .collage-note { right: 0; bottom: 18px; width: 92px; font-size: 15px; }
-  .attendee-strip { display: block; }
-  .attendee-list { margin: 18px 0 16px; }
-  .attendee-strip > .text-link { margin-top: 4px; }
+  .photo-rail { padding-inline: 7vw; }
+  .photo-rail-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .photo-rail-card:nth-child(n + 4) { display: none; }
+  .photo-rail-card img { height: 120px; }
+  .home-links { padding-inline: 7vw; }
+  .home-links-grid { grid-template-columns: 1fr; }
   .plan-section, .details-section, .memories-section { padding-inline: 7vw; }
   .day-card { grid-template-columns: 52px 1fr; }
   .day-card > img { grid-row: 1 / span 2; grid-column: 2; height: 105px; }

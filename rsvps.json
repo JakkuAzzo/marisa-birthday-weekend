@@ -1,12 +1,5 @@
 {
   "updatedAt": "2026-08-01T13:00:00+01:00",
-  "label": "people currently on the live weekend list",
-  "responses": [
-    { "name": "Marisa", "days": ["Friday 21 August", "Saturday 22 August", "Sunday 23 August"], "staying": "Yes — all three nights", "status": "host" },
-    { "name": "Nafe", "days": ["Friday 21 August", "Saturday 22 August", "Sunday 23 August"], "staying": "Yes — all three nights", "status": "organiser" },
-    { "name": "Alex", "days": ["Sunday 23 August"], "staying": "No", "status": "coming" },
-    { "name": "Max", "days": ["Friday 21 August", "Saturday 22 August", "Sunday 23 August"], "staying": "Yes — all three nights", "status": "coming" },
-    { "name": "Rosie", "days": ["Friday 21 August", "Saturday 22 August", "Sunday 23 August"], "staying": "No", "status": "coming" },
-    { "name": "Rosie's boyfriend", "days": ["Friday 21 August", "Saturday 22 August", "Sunday 23 August"], "staying": "No", "status": "coming" }
-  ]
+  "label": "confirmed responses only",
+  "responses": []
 }
