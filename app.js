@@ -178,21 +178,21 @@
     const notes = mergeShared(sharedNotes, read(storageKeys.notes, []));
     const media = mergeShared(sharedMedia, read(storageKeys.media, []));
     const cards = [
-      ...allPhotos.map((photo) => `<figure class="memory-card" style="--tilt:${photo.tilt}"><img src="${photo.src}" alt="${photo.alt}" loading="lazy" /><figcaption><strong>${photo.caption}</strong>from the archive</figcaption></figure>`),
       ...notes.map((note) => `<figure class="memory-card is-note" style="--tilt:${note.tilt || "0deg"}"><blockquote>“${escapeHtml(note.body)}”</blockquote><figcaption><strong>${escapeHtml(note.name)}</strong>${escapeHtml(note.mood)}</figcaption></figure>`),
       ...media.map((item) => {
         if (item.type === "message") return `<figure class="memory-card is-note" style="--tilt:${item.tilt || "0deg"}"><blockquote>“${escapeHtml(item.caption)}”</blockquote><figcaption><strong>${escapeHtml(item.name)}</strong>shared message</figcaption></figure>`;
-        const content = item.type === "video" ? `<video controls src="${item.url}" aria-label="Video shared by ${escapeHtml(item.name)}"></video>` : item.type === "audio" ? `<audio controls src="${item.url}" aria-label="Voice note shared by ${escapeHtml(item.name)}"></audio>` : `<img src="${item.url}" alt="${escapeHtml(item.name)}'s uploaded memory" />`;
+        const content = item.type === "video" ? `<video controls preload="metadata" src="${item.url}" aria-label="Video shared by ${escapeHtml(item.name)}"></video>` : item.type === "audio" ? `<audio controls preload="metadata" src="${item.url}" aria-label="Voice note shared by ${escapeHtml(item.name)}"></audio>` : `<img loading="lazy" decoding="async" src="${item.url}" alt="${escapeHtml(item.name)}'s uploaded memory" />`;
         return `<figure class="memory-card ${item.type === "video" ? "is-video" : ""} ${item.type === "audio" ? "is-audio" : ""}" style="--tilt:${item.tilt || "1deg"}">${content}<figcaption><strong>${escapeHtml(item.name)}</strong>${escapeHtml(item.caption || (item.type === "audio" ? "voice note" : "shared memory"))}</figcaption></figure>`;
       })
     ];
     const pageCount = Math.max(1, Math.ceil(cards.length / 10));
     memoryPage = Math.min(memoryPage, pageCount - 1);
     const start = memoryPage * 10;
-    node.innerHTML = cards.slice(start, start + 10).join("");
-    $("[data-memory-meta]").textContent = `Showing ${start + 1}–${Math.min(start + 10, cards.length)} of ${cards.length} memories · page ${memoryPage + 1} of ${pageCount}`;
-    $("[data-memory-prev]").disabled = memoryPage === 0;
-    $("[data-memory-next]").disabled = memoryPage >= pageCount - 1;
+    node.innerHTML = cards.length ? cards.slice(start, start + 10).join("") : '<p class="memory-empty">No new uploads yet — be the first to add a photo, video, voice note or message.</p>';
+    if (typeof setupImageLoading === "function") setupImageLoading();
+    $("[data-memory-meta]").textContent = cards.length ? `Showing ${start + 1}–${Math.min(start + 10, cards.length)} of ${cards.length} new uploads · page ${memoryPage + 1} of ${pageCount}` : "No new uploads yet";
+    $("[data-memory-prev]").disabled = cards.length === 0 || memoryPage === 0;
+    $("[data-memory-next]").disabled = cards.length === 0 || memoryPage >= pageCount - 1;
   };
 
   const calendarEvents = [
@@ -238,21 +238,19 @@
   };
 
   const setupPhotoRail = () => {
-    const rail = $("[data-photo-rail]");
-    if (!rail) return;
-    const images = $$(`[data-photo-rail-image]`, rail);
-    const captions = $$(`[data-photo-rail-caption]`, rail);
+    const collage = $("[data-hero-collage]");
+    if (!collage) return;
+    const images = $$(`[data-hero-collage-image]`, collage);
     let offset = 0;
     const update = () => {
-      rail.classList.add("is-changing");
+      collage.classList.add("is-changing");
       window.setTimeout(() => {
         images.forEach((image, index) => {
           const photo = allPhotos[(offset + index) % allPhotos.length];
           image.src = photo.src;
           image.alt = photo.alt;
-          captions[index].textContent = photo.caption;
         });
-        rail.classList.remove("is-changing");
+        collage.classList.remove("is-changing");
       }, 260);
       offset = (offset + 1) % allPhotos.length;
     };
@@ -366,6 +364,26 @@
     reader.readAsDataURL(file);
   });
 
+  const compressImage = (file) => new Promise((resolve) => {
+    if (!file.type.startsWith("image/") || file.size < 450 * 1024) { resolve(file); return; }
+    const image = new Image();
+    const sourceUrl = URL.createObjectURL(file);
+    image.addEventListener("load", () => {
+      const maxDimension = 1600;
+      const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+      canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
+      canvas.toBlob((blob) => {
+        URL.revokeObjectURL(sourceUrl);
+        resolve(blob ? new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.jpg`, { type: "image/jpeg" }) : file);
+      }, "image/jpeg", .82);
+    }, { once: true });
+    image.addEventListener("error", () => { URL.revokeObjectURL(sourceUrl); resolve(file); }, { once: true });
+    image.src = sourceUrl;
+  });
+
   const setupMemoryForm = () => {
     const form = $("[data-memory-form]");
     if (!form) return;
@@ -390,7 +408,7 @@
       input.accept = kind.value === "message" ? "" : `${kind.value}/*`;
       input.setAttribute("capture", captureMode);
       dropzone.querySelector("strong").textContent = kind.value === "message" ? "No file needed for a message" : `Choose or drop a ${kind.value}`;
-      dropzone.querySelector("span").textContent = kind.value === "message" ? "Written messages are shared instantly" : "Images, videos and voice notes · max 8MB each for free shared storage";
+      dropzone.querySelector("span").textContent = kind.value === "message" ? "Written messages are shared instantly" : "Images, videos and voice notes · max 8MB after automatic image compression";
       if (kind.value !== "audio") recordedFile = null;
     };
     kind.addEventListener("change", refreshFileRequirement);
@@ -423,13 +441,16 @@
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const data = Object.fromEntries(new FormData(form).entries());
-      const file = input.files[0] || recordedFile;
+      const selectedFile = input.files[0] || recordedFile;
       if (data.kind === "message" && !data.caption?.trim()) { status.textContent = "Write a message first, or choose a media type."; return; }
-      if (data.kind !== "message" && !file) { status.textContent = "Choose a file first, or switch to Written message."; return; }
-      if (file && file.size > 8 * 1024 * 1024) { status.textContent = "That file is over 8MB — please choose a smaller one for the free shared wall."; return; }
+      if (data.kind !== "message" && !selectedFile) { status.textContent = "Choose a file first, or switch to Written message."; return; }
+      setStatus(selectedFile?.type.startsWith("image/") ? "Optimising image for the shared wall…" : "Saving your memory…");
+      const file = selectedFile ? await compressImage(selectedFile) : null;
+      if (file && file.size > 8 * 1024 * 1024) { status.textContent = "That file is over 8MB after compression — please choose a smaller one."; return; }
       if (config.UPLOAD_ENDPOINT) {
         const body = new FormData(form);
-        if (recordedFile && !input.files[0]) body.set("file", recordedFile, recordedFile.name);
+        body.delete("file");
+        if (file) body.set("file", file, file.name);
         try { await fetch(config.UPLOAD_ENDPOINT, { method: "POST", body }); } catch { status.textContent = "Cloud upload failed; saving this memory locally instead."; }
       }
       const existing = read(storageKeys.media, []);
@@ -451,7 +472,7 @@
       }
       existing.push(item);
       try { write(storageKeys.media, existing); } catch { status.textContent = "That capture is too large for browser-only saving. Add an upload endpoint in config.js for larger shared media."; return; }
-      recordedFile = null; memoryPage = Math.ceil((allPhotos.length + mergeShared(sharedNotes, read(storageKeys.notes, [])).length + mergeShared(sharedMedia, existing).length) / 10) - 1; renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = sharedSaved && forwarded ? "Message shared and forwarded for email delivery." : sharedSaved ? "Added to the shared memory carousel." : config.UPLOAD_ENDPOINT ? "Added to the shared memory carousel." : "Added to this browser's memory carousel only."; toast(sharedSaved || config.UPLOAD_ENDPOINT ? "Memory added to the shared carousel." : "Memory saved locally to the carousel.");
+      recordedFile = null; memoryPage = Math.max(0, Math.ceil((mergeShared(sharedNotes, read(storageKeys.notes, [])).length + mergeShared(sharedMedia, existing).length) / 10) - 1); renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = sharedSaved && forwarded ? "Message shared and forwarded for email delivery." : sharedSaved ? "Added to the shared memory carousel." : config.UPLOAD_ENDPOINT ? "Added to the shared memory carousel." : "Added to this browser's memory carousel only."; toast(sharedSaved || config.UPLOAD_ENDPOINT ? "Memory added to the shared carousel." : "Memory saved locally to the carousel.");
     });
   };
 
@@ -484,5 +505,17 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupNavHighlight();
+  const setupImageLoading = () => {
+    $$('img:not(.hero-collage img)').forEach((image) => {
+      if (image.dataset.loadingBound) return;
+      image.dataset.loadingBound = "true";
+      image.loading = "lazy";
+      image.decoding = "async";
+      image.classList.add("media-skeleton");
+      const markLoaded = () => image.classList.add("is-loaded");
+      if (image.complete) markLoaded(); else image.addEventListener("load", markLoaded, { once: true });
+    });
+  };
+
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupNavHighlight(); setupImageLoading();
 })();
