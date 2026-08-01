@@ -8,6 +8,8 @@ window.MARISA_CONFIG = {
   RSVP_ENDPOINT: "https://formsubmit.co/nathanbrown-bennett%2Bmarisa-birthday@hotmail.com",
   NOTES_ENDPOINT: "https://formsubmit.co/nathanbrown-bennett%2Bmarisa-birthday@hotmail.com",
   UPLOAD_ENDPOINT: "",
+  FIREBASE_DATABASE_URL: "https://marisa-birthday-2026-default-rtdb.europe-west1.firebasedatabase.app",
+  FIREBASE_ACCESS_KEY: "happybirthday",
   LIVE_RSVPS_URL: "rsvps.json",
   SHARED_CALENDAR_URL: "",
   STRIPE_COMBINED_CHECKOUT_URL: "",

@@ -23,12 +23,12 @@ This is deliberately safe to host as a static site. A Stripe secret key must nev
 1. Create Stripe Payment Links for each shared cost, or one combined checkout link.
 2. Paste only those public URLs into `config.js`.
 3. Add form endpoints for `RSVP_ENDPOINT` and `NOTES_ENDPOINT` if RSVP and written-message emails are needed.
-4. Add an upload endpoint for `UPLOAD_ENDPOINT` if media needs cloud storage. The endpoint should accept `multipart/form-data` under the `media` field.
+4. Shared RSVP, written-message and small media storage is configured through the dedicated Firebase Realtime Database project in `firebase.json` and `database.rules.json`. The client caps captures at 8MB to stay within the free-tier approach.
 5. Add the group's shared calendar URL to `SHARED_CALENDAR_URL`, or keep the built-in `.ics` download.
 
-With blank endpoints, the site remains a fully usable private demo: RSVPs, notes and selected uploads persist locally in the visitor's browser. Microphone permission is requested only after pressing “Record voice note”; camera buttons use the mobile browser's capture flow. Larger media and cross-device sharing still require an upload endpoint.
+Microphone permission is requested only after pressing “Record voice note”; camera buttons use the mobile browser's capture flow. Firebase Realtime Database is used here instead of Firebase Cloud Storage because new Cloud Storage buckets require a billing plan; the public read / password-gated write rules are intended for this casual birthday site, not sensitive data.
 
-The password curtain is a casual privacy layer only. GitHub Pages serves the JavaScript publicly, so it is not suitable for genuinely confidential material. The public confirmed RSVP feed is `rsvps.json`; changing that file and pushing it updates the count on refresh. The “Who’s in?” strip stays hidden until the feed is backed by confirmed responses.
+The password curtain is a casual privacy layer only. GitHub Pages serves the JavaScript publicly, so it is not suitable for genuinely confidential material. The shared Firebase feed updates RSVPs and the memory wall across devices; `rsvps.json` remains as the static fallback. The “Who’s in?” strip stays hidden until the feed is backed by confirmed responses.
 
 ## Local preview
 

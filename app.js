@@ -55,6 +55,8 @@
     { name: "+12", more: true }
   ];
   let liveRsvps = [];
+  let sharedNotes = [];
+  let sharedMedia = [];
   let memoryPage = 0;
   const contributions = [
     { id: "boat", title: "Boat hire", detail: "2 hours · Sunday before sunset", icon: "ph-sailboat", amount: () => config.contributionAmounts?.boat ?? 31 },
@@ -69,6 +71,20 @@
   const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
   const money = (value) => `£${Number(value).toFixed(2)}`;
   const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char]));
+  const sharedBase = config.FIREBASE_DATABASE_URL ? `${config.FIREBASE_DATABASE_URL.replace(/\/$/, "")}/birthday` : "";
+  const sharedFetch = async (path, options = {}) => {
+    if (!sharedBase) return null;
+    const response = await fetch(`${sharedBase}/${path}.json`, { cache: "no-store", ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
+    if (!response.ok) throw new Error(`Shared storage returned ${response.status}`);
+    return response.status === 204 ? null : response.json();
+  };
+  const sharedItems = (payload) => payload && typeof payload === "object" ? Object.entries(payload).map(([remoteId, item]) => ({ ...item, remoteId })) : [];
+  const pushShared = async (collection, item) => {
+    if (!sharedBase) return false;
+    const response = await sharedFetch(collection, { method: "POST", body: JSON.stringify({ ...item, access: config.FIREBASE_ACCESS_KEY }) });
+    return Boolean(response?.name);
+  };
+  const mergeShared = (shared, local) => [...shared, ...local.filter((item) => !shared.some((remote) => remote.createdAt && remote.createdAt === item.createdAt && remote.name === item.name))];
 
   let toastTimer;
   const toast = (message) => {
@@ -116,6 +132,19 @@
     }
   };
 
+  const loadSharedData = async () => {
+    if (!sharedBase) return;
+    try {
+      const [rsvps, notes, media] = await Promise.all([sharedFetch("rsvps"), sharedFetch("notes"), sharedFetch("media")]);
+      liveRsvps = sharedItems(rsvps);
+      sharedNotes = sharedItems(notes);
+      sharedMedia = sharedItems(media);
+      renderAttendees(); renderMemories();
+    } catch {
+      /* The local wall remains usable if shared storage is unavailable. */
+    }
+  };
+
   const renderContributions = () => {
     const node = $("[data-contributions]");
     if (!node) return;
@@ -146,8 +175,8 @@
   const renderMemories = () => {
     const node = $("[data-memory-grid]");
     if (!node) return;
-    const notes = read(storageKeys.notes, []);
-    const media = read(storageKeys.media, []);
+    const notes = mergeShared(sharedNotes, read(storageKeys.notes, []));
+    const media = mergeShared(sharedMedia, read(storageKeys.media, []));
     const cards = [
       ...allPhotos.map((photo) => `<figure class="memory-card" style="--tilt:${photo.tilt}"><img src="${photo.src}" alt="${photo.alt}" loading="lazy" /><figcaption><strong>${photo.caption}</strong>from the archive</figcaption></figure>`),
       ...notes.map((note) => `<figure class="memory-card is-note" style="--tilt:${note.tilt || "0deg"}"><blockquote>“${escapeHtml(note.body)}”</blockquote><figcaption><strong>${escapeHtml(note.name)}</strong>${escapeHtml(note.mood)}</figcaption></figure>`),
@@ -292,6 +321,7 @@
     const form = event.currentTarget; const data = Object.fromEntries(new FormData(form).entries()); data.days = new FormData(form).getAll("days"); data.createdAt = new Date().toISOString();
     const rsvps = read(storageKeys.rsvps, []); const existing = rsvps.findIndex((item) => item.name.toLowerCase() === data.name.toLowerCase());
     if (existing >= 0) rsvps[existing] = data; else rsvps.push(data); write(storageKeys.rsvps, rsvps); renderAttendees();
+    if (sharedBase) { try { await pushShared("rsvps", data); } catch { /* local save still succeeds */ } }
     if (config.RSVP_ENDPOINT) {
       try {
         const body = new FormData(form);
@@ -312,6 +342,8 @@
     form.addEventListener("submit", async (event) => {
     event.preventDefault(); const noteForm = event.currentTarget; const data = Object.fromEntries(new FormData(noteForm).entries()); data.createdAt = new Date().toISOString(); data.tilt = `${(Math.random() * 4 - 2).toFixed(1)}deg`;
     const notes = read(storageKeys.notes, []); notes.push(data); write(storageKeys.notes, notes); renderMemories();
+    let sharedSaved = false;
+    if (sharedBase) { try { sharedSaved = await pushShared("notes", data); } catch { /* local save still succeeds */ } }
     let forwarded = false;
     if (config.NOTES_ENDPOINT) {
       try {
@@ -322,7 +354,7 @@
         forwarded = true;
       } catch { /* local save still succeeds */ }
     }
-    noteForm.reset(); $("[data-note-status]").textContent = forwarded ? "Your note was forwarded for email delivery and saved on this browser's memory wall." : "Your note is saved on this browser's memory wall."; toast(forwarded ? "Message forwarded and saved locally." : "Message saved locally to the memory wall.");
+    noteForm.reset(); $("[data-note-status]").textContent = sharedSaved ? "Your note is on the shared memory wall and has been forwarded for email delivery." : forwarded ? "Your note was forwarded for email delivery and saved on this browser's memory wall." : "Your note is saved on this browser's memory wall."; toast(sharedSaved ? "Message shared and forwarded." : forwarded ? "Message forwarded and saved locally." : "Message saved locally to the memory wall.");
     });
   };
 
@@ -391,7 +423,7 @@
       const data = Object.fromEntries(new FormData(form).entries());
       const file = input.files[0] || recordedFile;
       if (data.kind !== "message" && !file) { status.textContent = "Choose a file first, or switch to Written message."; return; }
-      if (file && file.size > 25 * 1024 * 1024) { status.textContent = "That file is over 25MB — please choose a smaller one."; return; }
+      if (file && file.size > 8 * 1024 * 1024) { status.textContent = "That file is over 8MB — please choose a smaller one for the free shared wall."; return; }
       if (config.UPLOAD_ENDPOINT) {
         const body = new FormData(form);
         if (recordedFile && !input.files[0]) body.set("file", recordedFile, recordedFile.name);
@@ -400,9 +432,11 @@
       const existing = read(storageKeys.media, []);
       const item = { name: data.name, caption: data.caption, type: data.kind, createdAt: new Date().toISOString(), tilt: `${(Math.random() * 4 - 2).toFixed(1)}deg` };
       if (file) item.url = await fileToDataUrl(file);
+      let sharedSaved = false;
+      if (sharedBase) { try { sharedSaved = await pushShared("media", item); } catch { /* local save still succeeds */ } }
       existing.push(item);
       try { write(storageKeys.media, existing); } catch { status.textContent = "That capture is too large for browser-only saving. Add an upload endpoint in config.js for larger shared media."; return; }
-      recordedFile = null; memoryPage = Math.ceil((allPhotos.length + read(storageKeys.notes, []).length + existing.length) / 10) - 1; renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = config.UPLOAD_ENDPOINT ? "Added to the shared memory carousel." : "Added to this browser's memory carousel only."; toast(config.UPLOAD_ENDPOINT ? "Memory added to the shared carousel." : "Memory saved locally to the carousel.");
+      recordedFile = null; memoryPage = Math.ceil((allPhotos.length + mergeShared(sharedNotes, read(storageKeys.notes, [])).length + mergeShared(sharedMedia, existing).length) / 10) - 1; renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = sharedSaved ? "Added to the shared memory carousel." : config.UPLOAD_ENDPOINT ? "Added to the shared memory carousel." : "Added to this browser's memory carousel only."; toast(sharedSaved || config.UPLOAD_ENDPOINT ? "Memory added to the shared carousel." : "Memory saved locally to the carousel.");
     });
   };
 
@@ -435,5 +469,5 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupNavHighlight();
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupNavHighlight();
 })();

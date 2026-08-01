@@ -1,0 +1,13 @@
+{
+  "rules": {
+    "birthday": {
+      ".read": true,
+      "$collection": {
+        "$entry": {
+          ".write": "newData.hasChildren(['access', 'createdAt']) && newData.child('access').val() == 'happybirthday'",
+          ".validate": "newData.child('createdAt').isString() && newData.child('createdAt').val().length <= 40 && (($collection == 'rsvps' && newData.child('name').isString() && newData.child('name').val().length <= 80) || ($collection == 'notes' && newData.child('name').isString() && newData.child('body').isString() && newData.child('body').val().length <= 5000) || ($collection == 'media' && newData.child('name').isString() && newData.child('type').isString() && (newData.child('type').val() == 'message' || (newData.child('url').isString() && newData.child('url').val().length <= 15000000))))"
+        }
+      }
+    }
+  }
+}

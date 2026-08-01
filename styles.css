@@ -168,6 +168,9 @@ body.page-home main > #memories { display: none; }
 .day-label { margin-bottom: 5px; color: var(--coral-dark); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; }
 .day-card h3 { margin-bottom: 7px; font-size: 24px; }
 .day-card-body > p:not(.day-label) { margin-bottom: 14px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.dress-code { display: flex; align-items: flex-start; gap: 7px; padding: 9px 10px; border: 1px solid rgba(195, 86, 72, .2); border-radius: 8px; background: rgba(252, 237, 224, .65); color: var(--plum) !important; font-size: 11px !important; line-height: 1.4 !important; }
+.dress-code i { flex: 0 0 auto; margin-top: 1px; color: var(--coral-dark); }
+.dress-code strong { margin-right: 3px; font-weight: 700; }
 .location { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 11px; }
 .location i { color: var(--coral-dark); }
 .goodbye-line { display: flex; align-items: center; justify-content: center; gap: 18px; max-width: 1150px; margin: 28px auto 0; padding-top: 24px; border-top: 1px dashed var(--line); color: var(--muted); }
