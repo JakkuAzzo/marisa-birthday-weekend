@@ -1,0 +1,8 @@
+{
+  "name": "marisa-birthday-weekend",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "python3 -m http.server"
+  }
+}
