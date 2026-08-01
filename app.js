@@ -292,7 +292,14 @@
     const form = event.currentTarget; const data = Object.fromEntries(new FormData(form).entries()); data.days = new FormData(form).getAll("days"); data.createdAt = new Date().toISOString();
     const rsvps = read(storageKeys.rsvps, []); const existing = rsvps.findIndex((item) => item.name.toLowerCase() === data.name.toLowerCase());
     if (existing >= 0) rsvps[existing] = data; else rsvps.push(data); write(storageKeys.rsvps, rsvps); renderAttendees();
-    if (config.RSVP_ENDPOINT) { try { await fetch(config.RSVP_ENDPOINT, { method: "POST", body: new FormData(form), mode: "no-cors" }); } catch { /* local save still succeeds */ } }
+    if (config.RSVP_ENDPOINT) {
+      try {
+        const body = new FormData(form);
+        body.set("_subject", "Marisa birthday weekend RSVP");
+        body.set("_template", "table");
+        await fetch(config.RSVP_ENDPOINT, { method: "POST", body, mode: "no-cors" });
+      } catch { /* local save still succeeds */ }
+    }
     const rsvpMessage = config.RSVP_ENDPOINT ? `RSVP submitted — see you ${data.days.length ? data.days.join(", ") : "when you can"}!` : "RSVP saved in this browser. Shared RSVP syncing is not connected yet.";
     $("[data-rsvp-status]").textContent = rsvpMessage;
     toast(config.RSVP_ENDPOINT ? "RSVP submitted." : "RSVP saved locally — shared syncing is not connected yet."); form.reset();
@@ -302,9 +309,20 @@
   const setupNotes = () => {
     const form = $("[data-note-form]");
     if (!form) return;
-    form.addEventListener("submit", (event) => {
-    event.preventDefault(); const data = Object.fromEntries(new FormData(event.currentTarget).entries()); data.createdAt = new Date().toISOString(); data.tilt = `${(Math.random() * 4 - 2).toFixed(1)}deg`;
-    const notes = read(storageKeys.notes, []); notes.push(data); write(storageKeys.notes, notes); renderMemories(); event.currentTarget.reset(); $("[data-note-status]").textContent = config.UPLOAD_ENDPOINT ? "Your note is on the shared memory wall." : "Your note is saved on this browser's memory wall."; toast(config.UPLOAD_ENDPOINT ? "Message added to the shared memory wall." : "Message saved locally to the memory wall.");
+    form.addEventListener("submit", async (event) => {
+    event.preventDefault(); const noteForm = event.currentTarget; const data = Object.fromEntries(new FormData(noteForm).entries()); data.createdAt = new Date().toISOString(); data.tilt = `${(Math.random() * 4 - 2).toFixed(1)}deg`;
+    const notes = read(storageKeys.notes, []); notes.push(data); write(storageKeys.notes, notes); renderMemories();
+    let forwarded = false;
+    if (config.NOTES_ENDPOINT) {
+      try {
+        const body = new FormData(noteForm);
+        body.set("_subject", "Marisa birthday weekend memory message");
+        body.set("_template", "table");
+        await fetch(config.NOTES_ENDPOINT, { method: "POST", body, mode: "no-cors" });
+        forwarded = true;
+      } catch { /* local save still succeeds */ }
+    }
+    noteForm.reset(); $("[data-note-status]").textContent = forwarded ? "Your note was forwarded for email delivery and saved on this browser's memory wall." : "Your note is saved on this browser's memory wall."; toast(forwarded ? "Message forwarded and saved locally." : "Message saved locally to the memory wall.");
     });
   };
 

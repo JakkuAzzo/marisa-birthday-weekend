@@ -22,7 +22,7 @@ This is deliberately safe to host as a static site. A Stripe secret key must nev
 
 1. Create Stripe Payment Links for each shared cost, or one combined checkout link.
 2. Paste only those public URLs into `config.js`.
-3. Add a form endpoint for `RSVP_ENDPOINT` if RSVPs need to be shared between devices.
+3. Add form endpoints for `RSVP_ENDPOINT` and `NOTES_ENDPOINT` if RSVP and written-message emails are needed.
 4. Add an upload endpoint for `UPLOAD_ENDPOINT` if media needs cloud storage. The endpoint should accept `multipart/form-data` under the `media` field.
 5. Add the group's shared calendar URL to `SHARED_CALENDAR_URL`, or keep the built-in `.ics` download.
 
