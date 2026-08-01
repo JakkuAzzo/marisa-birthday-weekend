@@ -55,6 +55,7 @@ h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { font-family: var(--display); font-weight: 400; letter-spacing: -.035em; line-height: 1.02; }
 h1 { max-width: 700px; margin-bottom: 22px; font-size: clamp(60px, 5.6vw, 88px); }
 h1 em, h2 em { font-style: italic; }
+h1 em { white-space: nowrap; }
 h2 { margin-bottom: 14px; font-size: clamp(55px, 6vw, 82px); }
 h3 { margin-bottom: 12px; font-size: 27px; }
 .hero-intro { max-width: 450px; margin-bottom: 24px; color: rgba(244, 234, 217, .78); font-size: 16px; }
@@ -229,6 +230,7 @@ code { padding: 2px 4px; background: rgba(50, 20, 38, .08); }
 @media (max-width: 560px) {
   .brand-script { font-size: 24px; }
   h1 { font-size: 58px; }
+  h1 em { white-space: normal; }
   .eyebrow-script { font-size: 33px; }
   .hero-intro { font-size: 14px; }
   .date-card { font-size: 18px; }
