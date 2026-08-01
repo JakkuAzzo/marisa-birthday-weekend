@@ -254,6 +254,17 @@ legend { margin-bottom: 9px; }
 .payment-summary span, .payment-summary strong { display: block; }
 .payment-summary span { color: var(--muted); font-size: 12px; }
 .payment-summary strong { font-family: var(--display); font-size: 30px; font-weight: 400; }
+.payment-confirmation { margin-top: 20px; padding: 20px; border: 1px solid rgba(237, 121, 93, .45); border-radius: 7px; background: rgba(237, 121, 93, .08); }
+.payment-confirmation-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
+.payment-confirmation-heading h3 { margin: 0 0 7px; }
+.payment-confirmation > p { margin-bottom: 17px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.payment-selected { max-width: 180px; color: var(--coral-dark); font-size: 12px; font-weight: 700; text-align: right; }
+.payment-confirmation-form { display: grid; gap: 10px; }
+.payment-confirmation-form label { color: var(--ink); }
+.payment-confirmation-form input { border-color: var(--line); background: var(--paper); color: var(--ink); }
+.payment-confirmation-form input::placeholder { color: rgba(50, 20, 38, .45); }
+.payment-confirmation-actions { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-top: 5px; }
+.payment-confirmation-actions .button { white-space: nowrap; }
 .tiny-note { margin: 18px 0 0; color: var(--muted); font-size: 11px; }
 code { padding: 2px 4px; background: rgba(50, 20, 38, .08); }
 .quick-links { display: grid; align-content: start; gap: 12px; }
@@ -373,6 +384,9 @@ code { padding: 2px 4px; background: rgba(50, 20, 38, .08); }
   .contribution-price { grid-column: 2; }
   .payment-summary { align-items: stretch; flex-direction: column; }
   .payment-summary .button { width: 100%; }
+  .payment-confirmation-heading, .payment-confirmation-actions { align-items: stretch; flex-direction: column; }
+  .payment-selected { max-width: none; text-align: left; }
+  .payment-confirmation-actions .button { width: 100%; }
   .form-row { grid-template-columns: 1fr; }
   .memory-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .memory-card { min-height: 170px; padding: 6px 6px 11px; }

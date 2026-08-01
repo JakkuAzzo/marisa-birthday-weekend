@@ -1,24 +1,14 @@
-/*
- * Public configuration only. Never put a Stripe secret key here.
- *
- * For a live GitHub Pages version, add public Stripe Payment Link URLs to
- * stripePaymentLinks, and connect the form endpoints to trusted services.
- */
+/* Public configuration only. Never put banking credentials or secrets here. */
 window.MARISA_CONFIG = {
   RSVP_ENDPOINT: "https://formsubmit.co/nathanbrown-bennett%2Bmarisa-birthday@hotmail.com",
   NOTES_ENDPOINT: "https://formsubmit.co/nathanbrown-bennett%2Bmarisa-birthday@hotmail.com",
+  PAYMENTS_ENDPOINT: "https://formsubmit.co/nathanbrown-bennett%2Bmarisa-birthday@hotmail.com",
   UPLOAD_ENDPOINT: "",
   FIREBASE_DATABASE_URL: "https://marisa-birthday-2026-default-rtdb.europe-west1.firebasedatabase.app",
   FIREBASE_ACCESS_KEY: "happybirthday",
   LIVE_RSVPS_URL: "rsvps.json",
   SHARED_CALENDAR_URL: "",
-  STRIPE_COMBINED_CHECKOUT_URL: "",
-  stripePaymentLinks: {
-    boat: "",
-    cinema: "",
-    stay: "",
-    gift: ""
-  },
+  MONZO_PAYMENT_URL: "https://monzo.me/nathanbrownbennett?h=sWJ2zY&account_type=personal",
   contributionAmounts: {
     boat: 31,
     cinema: 12,

@@ -12,18 +12,18 @@ A static GitHub Pages event hub for Marisa's birthday weekend, 21–24 August 20
 - local RSVP and message persistence in the browser
 - downloadable weekend calendar (`.ics`)
 - contribution selector for boat hire, cinema, accommodation and gift fund
-- Stripe Payment Link hooks in `config.js`
+- Monzo payment link with a post-payment name, amount and reference report
 - image/video/voice-note/message uploader and paged memory carousel
 - microphone recording plus direct photo/video capture controls where the browser supports them
 
 ## Connecting the live services
 
-This is deliberately safe to host as a static site. A Stripe secret key must never be placed in the browser.
+This is deliberately safe to host as a static site. The Monzo link is public; no banking credentials are placed in the browser.
 
-1. Create Stripe Payment Links for each shared cost, or one combined checkout link.
-2. Paste only those public URLs into `config.js`.
-3. Add form endpoints for `RSVP_ENDPOINT` and `NOTES_ENDPOINT` if RSVP and written-message emails are needed.
-4. Shared RSVP, written-message and small media storage is configured through the dedicated Firebase Realtime Database project in `firebase.json` and `database.rules.json`. The client caps captures at 8MB to stay within the free-tier approach.
+1. Open the Monzo link from the contribution desk and send the selected amount.
+2. Complete the payment report with your name, amount and Monzo reference/sender name. Reports are self-reported until matched in Monzo.
+3. `PAYMENTS_ENDPOINT` forwards the report for email delivery, while the Firebase `payments` collection stores it for shared reconciliation.
+4. Shared RSVP, payment reports, written-message and small media storage is configured through the dedicated Firebase Realtime Database project in `firebase.json` and `database.rules.json`. The client caps captures at 8MB to stay within the free-tier approach.
 5. Add the group's shared calendar URL to `SHARED_CALENDAR_URL`, or keep the built-in `.ics` download.
 
 Microphone permission is requested only after pressing “Record voice note”; camera buttons use the mobile browser's capture flow. Firebase Realtime Database is used here instead of Firebase Cloud Storage because new Cloud Storage buckets require a billing plan; the public read / password-gated write rules are intended for this casual birthday site, not sensitive data.

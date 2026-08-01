@@ -1,6 +1,6 @@
 (() => {
   const config = window.MARISA_CONFIG || {};
-  const storageKeys = { rsvps: "marisa-birthday-rsvps", notes: "marisa-birthday-notes", media: "marisa-birthday-media" };
+  const storageKeys = { rsvps: "marisa-birthday-rsvps", notes: "marisa-birthday-notes", media: "marisa-birthday-media", payments: "marisa-birthday-payments" };
   const photos = [
     { src: "assets/photos/marisa-roses.jpeg", caption: "The birthday girl", alt: "Marisa holding roses beside the water", tilt: "-2deg" },
     { src: "assets/photos/marisa-water.jpeg", caption: "A little sunshine", alt: "Marisa smiling by the water", tilt: "2deg" },
@@ -491,12 +491,69 @@
   const setupPayments = () => {
     const action = $("[data-payment-action]");
     if (!action) return;
+    const summary = action.closest(".contributions-panel");
+    const summaryNote = summary?.querySelector(".tiny-note");
+    action.innerHTML = '<i class="ph ph-arrow-square-out" aria-hidden="true"></i> Pay with Monzo';
+    if (summaryNote) summaryNote.textContent = "Payments use the Monzo link. Reports here are self-reported and will be checked against Monzo before anything is marked fully confirmed.";
+    action.insertAdjacentHTML("afterend", '<div class="payment-confirmation" data-payment-confirmation hidden><div class="payment-confirmation-heading"><div><p class="eyebrow coral">AFTER YOU PAY</p><h3>Tell us what you sent</h3></div><span class="payment-selected" data-payment-selected></span></div><p>Monzo does not send this website a payment receipt, so add the name/reference you used. This lets Nafe match your report against the bank transfer.</p><form class="payment-confirmation-form" data-payment-confirmation-form><label for="payment-name">Your name</label><input id="payment-name" name="name" type="text" autocomplete="name" placeholder="e.g. Alex" required /><label for="payment-amount">Amount sent</label><input id="payment-amount" name="amount" type="number" min="0.01" step="0.01" inputmode="decimal" required /><label for="payment-reference">Monzo reference or sender name</label><input id="payment-reference" name="reference" type="text" maxlength="120" placeholder="e.g. AlexM" required /><div class="payment-confirmation-actions"><a class="text-link" data-monzo-link href="https://monzo.me/nathanbrownbennett?h=sWJ2zY&amp;account_type=personal" target="_blank" rel="noopener noreferrer">Open Monzo again <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a><button class="button button-coral" type="submit"><i class="ph ph-check" aria-hidden="true"></i> Save payment report</button></div><p class="form-status" data-payment-confirmation-status role="status"></p></form></div>');
+    const confirmation = $("[data-payment-confirmation]");
+    const form = $("[data-payment-confirmation-form]");
+    const selectedLabel = $("[data-payment-selected]");
+    const amountInput = $("[data-payment-amount]");
+    const status = $("[data-payment-confirmation-status]");
+    const monzoLink = $("[data-monzo-link]");
+    if (monzoLink && config.MONZO_PAYMENT_URL) monzoLink.href = config.MONZO_PAYMENT_URL;
+
     action.addEventListener("click", () => {
-    const selected = selectedContributionIds(); if (!selected.length) { toast("Choose at least one shared cost first."); return; }
-    if (config.STRIPE_COMBINED_CHECKOUT_URL) { window.open(config.STRIPE_COMBINED_CHECKOUT_URL, "_blank", "noopener"); return; }
-    const links = selected.map((id) => config.stripePaymentLinks?.[id]).filter(Boolean);
-    if (links.length === selected.length) { links.forEach((link) => window.open(link, "_blank", "noopener")); return; }
-    toast("The contribution choices are ready. Add the public Stripe Payment Links in birthday/config.js to activate checkout.");
+      const selected = selectedContributionIds();
+      if (!selected.length) { toast("Choose at least one shared cost first."); return; }
+      const total = selected.reduce((sum, id) => sum + contributions.find((item) => item.id === id).amount(), 0);
+      const names = selected.map((id) => contributions.find((item) => item.id === id).title);
+      if (selectedLabel) selectedLabel.textContent = `${names.join(", ")} · ${money(total)}`;
+      if (amountInput) amountInput.value = total.toFixed(2);
+      if (status) status.textContent = "";
+      if (confirmation) confirmation.hidden = false;
+      window.open(config.MONZO_PAYMENT_URL || "https://monzo.me/", "_blank", "noopener,noreferrer");
+      confirmation?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    });
+
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      const selected = selectedContributionIds();
+      const amount = Number(data.amount);
+      if (!selected.length) { if (status) status.textContent = "Select at least one cost first."; return; }
+      if (!data.name?.trim() || !data.reference?.trim() || !Number.isFinite(amount) || amount <= 0) {
+        if (status) status.textContent = "Please enter your name, the amount sent and your Monzo reference.";
+        return;
+      }
+      const item = {
+        name: data.name.trim(), amount: Math.round(amount * 100) / 100,
+        reference: data.reference.trim(),
+        costs: selected.map((id) => contributions.find((entry) => entry.id === id).title).join(", "),
+        createdAt: new Date().toISOString(), status: "self-reported"
+      };
+      const payments = read(storageKeys.payments, []);
+      payments.push(item);
+      try { write(storageKeys.payments, payments); } catch { /* shared/email delivery may still succeed */ }
+      let sharedSaved = false;
+      if (sharedBase) { try { sharedSaved = await pushShared("payments", item); } catch { /* email/local save still succeeds */ } }
+      let forwarded = false;
+      if (config.PAYMENTS_ENDPOINT) {
+        try {
+          const body = new FormData();
+          Object.entries(item).forEach(([key, value]) => body.set(key, String(value)));
+          body.set("_subject", "Marisa birthday weekend payment report");
+          body.set("_template", "table");
+          await fetch(config.PAYMENTS_ENDPOINT, { method: "POST", body, mode: "no-cors" });
+          forwarded = true;
+        } catch { /* local/shared save still succeeds */ }
+      }
+      if (status) status.textContent = sharedSaved || forwarded
+        ? "Payment report saved — I’ll match the reference against Monzo."
+        : "Payment report saved on this browser; please also send the reference to Nafe.";
+      toast(sharedSaved || forwarded ? "Payment report saved." : "Payment report saved locally.");
+      form.reset();
     });
   };
 
