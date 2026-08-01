@@ -58,7 +58,7 @@ html.is-gated .site-shell { visibility: hidden; height: 100vh; overflow: hidden;
 .page-details .details-section { --section-photo: url('assets/photos/marisa-hat.jpeg'); }
 .section-posters { position: absolute !important; z-index: 0 !important; inset: 0; overflow: hidden; pointer-events: none; }
 .poster-frame { position: absolute; display: block; width: clamp(116px, 13vw, 190px); padding: 9px 9px 28px; background: #f9f0e1; box-shadow: 0 15px 28px rgba(50, 20, 38, .14); opacity: .68; }
-.poster-frame img { width: 100%; aspect-ratio: .78; object-fit: cover; filter: saturate(.78) contrast(.94); }
+.poster-frame img { width: 100%; aspect-ratio: .78; object-fit: cover; object-position: 50% 28%; filter: saturate(.78) contrast(.94); }
 .poster-frame-1 { top: 8%; left: -3%; transform: rotate(-8deg); }
 .poster-frame-2 { top: 46%; right: -3%; transform: rotate(7deg); }
 .poster-frame-3 { right: 20%; bottom: -16%; transform: rotate(-5deg); }
@@ -135,7 +135,9 @@ h3 { margin-bottom: 12px; font-size: 27px; }
 .hero-collage { position: relative; min-height: 505px; margin-right: 2vw; transition: opacity .34s ease; }
 .hero-collage.reveal.is-changing { opacity: 0; }
 .photo-card { position: absolute; overflow: hidden; padding: 11px; background: #f9f0e1; box-shadow: var(--shadow); transition: transform .72s cubic-bezier(.22, .61, .36, 1), top .72s ease, right .72s ease, bottom .72s ease, left .72s ease; }
-.photo-card img { height: 100%; object-fit: cover; }
+.photo-card img { height: 100%; object-fit: cover; object-position: 50% 30%; }
+.photo-card-small img { object-position: 50% 26%; }
+.photo-card-wide img { object-position: 50% 24%; }
 .photo-card-large { top: 20px; left: 11%; width: 49%; height: 360px; transform: rotate(-4deg); }
 .photo-card-small { top: 8%; right: 0; width: 35%; height: 250px; transform: rotate(6deg); }
 .photo-card-wide { right: 7%; bottom: 12px; width: 62%; height: 215px; transform: rotate(-1.2deg); }
