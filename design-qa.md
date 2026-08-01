@@ -17,7 +17,7 @@ No actionable P0, P1 or P2 findings remain.
 - The aubergine hero, cream paper sections, coral accent, serif/script hierarchy, collage treatment, attendee strip, plan cards, and memory-wall structure all carry through from the approved direction.
 - The generated mockup's placeholder photography was intentionally replaced with Marisa's supplied personal photos.
 - The hero title was refined after the first comparison so “Birthday Weekend” stays on one desktop line, matching the source composition; mobile overrides allow normal wrapping.
-- The implementation adds real event-specific content and functional states beyond the source mockup: separate pages, RSVP, shared-cost selection, calendar download, notes, image/video/voice-note/message capture UI, a paged five-column memory wall, and Stripe hooks.
+- The implementation adds real event-specific content and functional states beyond the source mockup: separate pages, RSVP, shared-cost selection, calendar download, notes, image/video/voice-note/message capture UI, a paged five-column memory wall, and a Monzo payment-report flow.
 - All 41 supplied photo assets are referenced by the site; the rotating photo rail cycles through the archive every 4.2 seconds, while the memory wall presents 40 archive cards plus any new browser-local memories.
 - The casual password curtain and the birthday-only Marisa view are implemented before the main page becomes visible.
 - The assumed attendee strip and seeded RSVP records were removed; the confirmed RSVP feed is empty until backed by real responses.
