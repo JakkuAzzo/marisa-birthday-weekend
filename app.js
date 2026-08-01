@@ -424,6 +424,7 @@
       event.preventDefault();
       const data = Object.fromEntries(new FormData(form).entries());
       const file = input.files[0] || recordedFile;
+      if (data.kind === "message" && !data.caption?.trim()) { status.textContent = "Write a message first, or choose a media type."; return; }
       if (data.kind !== "message" && !file) { status.textContent = "Choose a file first, or switch to Written message."; return; }
       if (file && file.size > 8 * 1024 * 1024) { status.textContent = "That file is over 8MB — please choose a smaller one for the free shared wall."; return; }
       if (config.UPLOAD_ENDPOINT) {
@@ -436,9 +437,21 @@
       if (file) item.url = await fileToDataUrl(file);
       let sharedSaved = false;
       if (sharedBase) { try { sharedSaved = await pushShared("media", item); } catch { /* local save still succeeds */ } }
+      let forwarded = false;
+      if (data.kind === "message" && config.NOTES_ENDPOINT) {
+        try {
+          const body = new FormData();
+          body.set("name", data.name);
+          body.set("body", data.caption);
+          body.set("_subject", "Marisa birthday weekend memory message");
+          body.set("_template", "table");
+          await fetch(config.NOTES_ENDPOINT, { method: "POST", body, mode: "no-cors" });
+          forwarded = true;
+        } catch { /* shared save still succeeds */ }
+      }
       existing.push(item);
       try { write(storageKeys.media, existing); } catch { status.textContent = "That capture is too large for browser-only saving. Add an upload endpoint in config.js for larger shared media."; return; }
-      recordedFile = null; memoryPage = Math.ceil((allPhotos.length + mergeShared(sharedNotes, read(storageKeys.notes, [])).length + mergeShared(sharedMedia, existing).length) / 10) - 1; renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = sharedSaved ? "Added to the shared memory carousel." : config.UPLOAD_ENDPOINT ? "Added to the shared memory carousel." : "Added to this browser's memory carousel only."; toast(sharedSaved || config.UPLOAD_ENDPOINT ? "Memory added to the shared carousel." : "Memory saved locally to the carousel.");
+      recordedFile = null; memoryPage = Math.ceil((allPhotos.length + mergeShared(sharedNotes, read(storageKeys.notes, [])).length + mergeShared(sharedMedia, existing).length) / 10) - 1; renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = sharedSaved && forwarded ? "Message shared and forwarded for email delivery." : sharedSaved ? "Added to the shared memory carousel." : config.UPLOAD_ENDPOINT ? "Added to the shared memory carousel." : "Added to this browser's memory carousel only."; toast(sharedSaved || config.UPLOAD_ENDPOINT ? "Memory added to the shared carousel." : "Memory saved locally to the carousel.");
     });
   };
 
