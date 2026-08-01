@@ -6,11 +6,13 @@ A static GitHub Pages event hub for Marisa's birthday weekend, 21–24 August 20
 
 - responsive aubergine / cream event hub with Marisa's supplied photos
 - RSVP form with day-by-day availability and overnight status
+- password curtain (`happybirthday`) with a birthday-only Marisa view (`210803`)
+- refreshable live attendee list from `rsvps.json`
 - local RSVP and message persistence in the browser
 - downloadable weekend calendar (`.ics`)
 - contribution selector for boat hire, cinema, accommodation and gift fund
 - Stripe Payment Link hooks in `config.js`
-- local image/video preview and a memory wall
+- image/video/voice-note/message uploader and paged memory carousel
 
 ## Connecting the live services
 
@@ -23,6 +25,8 @@ This is deliberately safe to host as a static site. A Stripe secret key must nev
 5. Add the group's shared calendar URL to `SHARED_CALENDAR_URL`, or keep the built-in `.ics` download.
 
 With blank endpoints, the site remains a fully usable private demo: RSVPs, notes and selected uploads persist locally in the visitor's browser.
+
+The password curtain is a casual privacy layer only. GitHub Pages serves the JavaScript publicly, so it is not suitable for genuinely confidential material. The public attendee feed is `rsvps.json`; changing that file and pushing it updates the attendee list on refresh.
 
 ## Local preview
 

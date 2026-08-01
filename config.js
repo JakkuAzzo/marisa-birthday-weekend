@@ -8,6 +8,7 @@
 window.MARISA_CONFIG = {
   RSVP_ENDPOINT: "",
   UPLOAD_ENDPOINT: "",
+  LIVE_RSVPS_URL: "rsvps.json",
   SHARED_CALENDAR_URL: "",
   STRIPE_COMBINED_CHECKOUT_URL: "",
   stripePaymentLinks: {

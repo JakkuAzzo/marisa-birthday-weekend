@@ -15,6 +15,37 @@
     { src: "assets/photos/family-table.jpeg", caption: "Together", alt: "Family and friends gathered at a table", tilt: "-2deg" },
     { src: "assets/photos/couple-close.jpeg", caption: "Always a moment", alt: "A close-up photo of two people smiling", tilt: "1deg" }
   ];
+  const archivePhotos = [
+    ["marisa-nafe-food.jpeg", "Food and fuss", "Marisa and Nafe sharing a plate"],
+    ["marisa-face-flower.jpeg", "Flower wall close-up", "Close-up portrait of Marisa in front of flowers"],
+    ["marisa-window.jpeg", "Golden hour", "Marisa sitting by a window"],
+    ["marisa-magenta.jpeg", "Purple lights", "Marisa in purple light"],
+    ["marisa-profile-magenta.jpeg", "A soft profile", "Marisa in side profile under purple light"],
+    ["marisa-hood-magenta.jpeg", "Hood up", "Marisa posing in a hood under pink light"],
+    ["marisa-hood.jpeg", "Classic Marisa", "Marisa in a black varsity jacket"],
+    ["marisa-portrait.jpeg", "Portrait day", "Portrait of Marisa in a patterned dress"],
+    ["marisa-seating.jpeg", "Up high", "Marisa sitting above the room"],
+    ["marisa-purple-seating.jpeg", "Electric blue", "Marisa sitting in purple light"],
+    ["marisa-profile.jpeg", "Looking out", "Marisa looking into the distance"],
+    ["marisa-dinner.jpeg", "Dinner plans", "Marisa at a restaurant"],
+    ["group-table-portrait.jpeg", "All together", "Family and friends around a table"],
+    ["friends-hotel.jpeg", "Hotel laughs", "Friends laughing together indoors"],
+    ["marisa-hat.jpeg", "Hat moment", "Marisa posing in a sun hat"],
+    ["marisa-evening-city.jpeg", "City lights", "Marisa by the river at dusk"],
+    ["marisa-gold-dress.jpeg", "Golden glow", "Marisa in a gold dress"],
+    ["marisa-bus.jpeg", "On the move", "Marisa on a blue-lit bus"],
+    ["marisa-bouquet.jpeg", "Bouquet girl", "Marisa with a bouquet beside the water"],
+    ["marisa-hair.jpeg", "Hair day", "Marisa showing off her hair"],
+    ["marisa-park-friend.jpeg", "Good company", "Marisa and a friend out and about"],
+    ["marisa-laughing-field.jpeg", "Big laugh", "Marisa laughing outside"],
+    ["marisa-among-us.jpeg", "Game night", "Marisa in an Among Us sweatshirt"],
+    ["marisa-coat.jpeg", "Cosy season", "Marisa in a warm coat"],
+    ["couple-couch.jpeg", "Couch crew", "Marisa and Nafe relaxing together"],
+    ["family-dinner.jpeg", "Dinner together", "Family and friends sharing a meal"],
+    ["marisa-browns.jpeg", "Browns night", "Marisa outside Browns"],
+    ["marisa-white-dress.jpeg", "White dress", "Marisa smiling in a white dress"]
+  ].map(([file, caption, alt], index) => ({ src: `assets/photos/${file}`, caption, alt, tilt: `${index % 2 ? 1 : -1}deg` }));
+  const allPhotos = [...photos, ...archivePhotos];
   const defaultAttendees = [
     { name: "Marisa", image: "assets/photos/marisa-roses.jpeg" },
     { name: "Nafe", image: "assets/photos/marisa-nafe-water.jpeg" },
@@ -23,6 +54,8 @@
     { name: "Rosie", image: "assets/photos/friends-outdoors.jpeg" },
     { name: "+12", more: true }
   ];
+  let liveRsvps = defaultAttendees.slice(0, -1).map((person) => ({ name: person.name, days: [], staying: "Unknown" }));
+  let memoryPage = 0;
   const contributions = [
     { id: "boat", title: "Boat hire", detail: "2 hours · Sunday before sunset", icon: "ph-sailboat", amount: () => config.contributionAmounts?.boat ?? 31 },
     { id: "cinema", title: "Vue cinema", detail: "Spider-Man: Brand New Day", icon: "ph-film-strip", amount: () => config.contributionAmounts?.cinema ?? 12 },
@@ -46,15 +79,39 @@
     toastTimer = window.setTimeout(() => node.classList.remove("is-visible"), 4200);
   };
 
+  const getRsvps = () => {
+    const local = read(storageKeys.rsvps, []);
+    const merged = [...liveRsvps];
+    local.forEach((person) => {
+      const index = merged.findIndex((item) => item.name.toLowerCase() === person.name.toLowerCase());
+      if (index >= 0) merged[index] = { ...merged[index], ...person, source: "this browser" };
+      else merged.push({ ...person, source: "this browser" });
+    });
+    return merged;
+  };
+
   const renderAttendees = () => {
     const node = $("[data-attendees]");
-    const rsvps = read(storageKeys.rsvps, []);
+    const rsvps = getRsvps();
     const dynamic = rsvps.filter((person) => !defaultAttendees.some((item) => item.name.toLowerCase() === person.name.toLowerCase())).slice(-3);
     const list = [...defaultAttendees.slice(0, -1), ...dynamic, defaultAttendees.at(-1)];
     node.innerHTML = list.map((person) => person.more
       ? `<div class="attendee is-more"><span class="attendee-avatar">+12</span><span>more</span></div>`
       : `<div class="attendee"><span class="attendee-avatar">${person.image ? `<img src="${person.image}" alt="" />` : escapeHtml(person.name.slice(0, 1))}</span><span>${escapeHtml(person.name)}</span></div>`).join("");
     $("[data-rsvp-count]").textContent = rsvps.length;
+    $("[data-rsvp-label]").textContent = config.LIVE_RSVPS_URL ? "people currently on the live weekend list" : "responses saved in this browser";
+  };
+
+  const loadLiveRsvps = async () => {
+    if (!config.LIVE_RSVPS_URL) return;
+    try {
+      const response = await fetch(`${config.LIVE_RSVPS_URL}?updated=${Date.now()}`, { cache: "no-store" });
+      if (!response.ok) throw new Error("Live RSVP feed unavailable");
+      const payload = await response.json();
+      if (Array.isArray(payload.responses)) { liveRsvps = payload.responses; renderAttendees(); }
+    } catch {
+      renderAttendees();
+    }
   };
 
   const renderContributions = () => {
@@ -86,11 +143,21 @@
     const notes = read(storageKeys.notes, []);
     const media = read(storageKeys.media, []);
     const cards = [
-      ...photos.map((photo) => `<figure class="memory-card" style="--tilt:${photo.tilt}"><img src="${photo.src}" alt="${photo.alt}" loading="lazy" /><figcaption><strong>${photo.caption}</strong>from the archive</figcaption></figure>`),
+      ...allPhotos.map((photo) => `<figure class="memory-card" style="--tilt:${photo.tilt}"><img src="${photo.src}" alt="${photo.alt}" loading="lazy" /><figcaption><strong>${photo.caption}</strong>from the archive</figcaption></figure>`),
       ...notes.map((note) => `<figure class="memory-card is-note" style="--tilt:${note.tilt || "0deg"}"><blockquote>“${escapeHtml(note.body)}”</blockquote><figcaption><strong>${escapeHtml(note.name)}</strong>${escapeHtml(note.mood)}</figcaption></figure>`),
-      ...media.map((item) => `<figure class="memory-card ${item.type === "video" ? "is-video" : ""}" style="--tilt:${item.tilt || "1deg"}">${item.type === "video" ? `<video controls src="${item.url}" aria-label="Video shared by ${escapeHtml(item.name)}"></video>` : `<img src="${item.url}" alt="${escapeHtml(item.name)}'s uploaded memory" />`}<figcaption><strong>${escapeHtml(item.name)}</strong>shared memory</figcaption></figure>`)
+      ...media.map((item) => {
+        if (item.type === "message") return `<figure class="memory-card is-note" style="--tilt:${item.tilt || "0deg"}"><blockquote>“${escapeHtml(item.caption)}”</blockquote><figcaption><strong>${escapeHtml(item.name)}</strong>shared message</figcaption></figure>`;
+        const content = item.type === "video" ? `<video controls src="${item.url}" aria-label="Video shared by ${escapeHtml(item.name)}"></video>` : item.type === "audio" ? `<audio controls src="${item.url}" aria-label="Voice note shared by ${escapeHtml(item.name)}"></audio>` : `<img src="${item.url}" alt="${escapeHtml(item.name)}'s uploaded memory" />`;
+        return `<figure class="memory-card ${item.type === "video" ? "is-video" : ""} ${item.type === "audio" ? "is-audio" : ""}" style="--tilt:${item.tilt || "1deg"}">${content}<figcaption><strong>${escapeHtml(item.name)}</strong>${escapeHtml(item.caption || (item.type === "audio" ? "voice note" : "shared memory"))}</figcaption></figure>`;
+      })
     ];
-    node.innerHTML = cards.slice(-16).join("");
+    const pageCount = Math.max(1, Math.ceil(cards.length / 10));
+    memoryPage = Math.min(memoryPage, pageCount - 1);
+    const start = memoryPage * 10;
+    node.innerHTML = cards.slice(start, start + 10).join("");
+    $("[data-memory-meta]").textContent = `Showing ${start + 1}–${Math.min(start + 10, cards.length)} of ${cards.length} memories · page ${memoryPage + 1} of ${pageCount}`;
+    $("[data-memory-prev]").disabled = memoryPage === 0;
+    $("[data-memory-next]").disabled = memoryPage >= pageCount - 1;
   };
 
   const calendarEvents = [
@@ -144,6 +211,48 @@
     $$(".reveal").forEach((node) => observer.observe(node));
   };
 
+  const isBirthdayToday = () => {
+    const londonDate = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
+    return londonDate === "21/08/2026";
+  };
+
+  const unlockWebsite = (mode) => {
+    try { sessionStorage.setItem("marisa-birthday-access", mode); } catch { /* private browsing can disable storage */ }
+    document.documentElement.classList.remove("is-gated");
+    document.body.classList.add("is-unlocked");
+    const marisaView = $("[data-marisa-view]");
+    if (mode === "marisa") {
+      document.body.classList.add("is-marisa-mode");
+      marisaView.hidden = false;
+    }
+  };
+
+  const setupGate = () => {
+    let access = "";
+    try { access = sessionStorage.getItem("marisa-birthday-access") || ""; } catch { /* continue locked */ }
+    if (access === "guest" || access === "marisa") { unlockWebsite(access); return; }
+    const form = $("[data-gate-form]");
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const password = new FormData(form).get("password").toString().trim().toLowerCase();
+      const status = $("[data-gate-status]");
+      if (password === "happybirthday") { status.textContent = "Welcome in — keep the link within the group."; unlockWebsite("guest"); return; }
+      if (password === "210803") {
+        if (isBirthdayToday()) { unlockWebsite("marisa"); return; }
+        status.textContent = "nuh uhhhh you gotta wait silly billy";
+        form.reset();
+        return;
+      }
+      status.textContent = "Nope. Nothing to see here 🤨";
+      form.reset();
+    });
+    $("[data-marisa-back]").addEventListener("click", () => {
+      document.body.classList.remove("is-marisa-mode");
+      $("[data-marisa-view]").hidden = true;
+      try { sessionStorage.setItem("marisa-birthday-access", "guest"); } catch { /* no-op */ }
+    });
+  };
+
   const setupRsvp = () => $("[data-rsvp-form]").addEventListener("submit", async (event) => {
     event.preventDefault();
     const form = event.currentTarget; const data = Object.fromEntries(new FormData(form).entries()); data.days = new FormData(form).getAll("days"); data.createdAt = new Date().toISOString();
@@ -151,7 +260,7 @@
     if (existing >= 0) rsvps[existing] = data; else rsvps.push(data); write(storageKeys.rsvps, rsvps); renderAttendees();
     if (config.RSVP_ENDPOINT) { try { await fetch(config.RSVP_ENDPOINT, { method: "POST", body: new FormData(form), mode: "no-cors" }); } catch { /* local save still succeeds */ } }
     $("[data-rsvp-status]").textContent = `Saved — see you ${data.days.length ? data.days.join(", ") : "when you can"}!`;
-    toast("RSVP saved on this device."); form.reset();
+    toast("RSVP saved — refresh the page and it will still be here."); form.reset();
   });
 
   const setupNotes = () => $("[data-note-form]").addEventListener("submit", (event) => {
@@ -166,16 +275,42 @@
     reader.readAsDataURL(file);
   });
 
-  const setupUploads = () => {
-    const input = $("[data-upload-input]"); $("[data-upload-trigger]").addEventListener("click", () => input.click());
-    input.addEventListener("change", async () => {
-      const files = [...input.files]; if (!files.length) return;
-      if (config.UPLOAD_ENDPOINT) { const body = new FormData(); files.forEach((file) => body.append("media", file)); try { await fetch(config.UPLOAD_ENDPOINT, { method: "POST", body }); toast("Upload sent — it may take a moment to appear."); } catch { toast("Upload could not be sent, so it was kept locally instead."); } }
+  const setupMemoryForm = () => {
+    const form = $("[data-memory-form]");
+    const kind = $("#memory-kind");
+    const input = $("[data-upload-input]");
+    const dropzone = $(".upload-dropzone");
+    const refreshFileRequirement = () => {
+      input.required = kind.value !== "message";
+      dropzone.querySelector("strong").textContent = kind.value === "message" ? "No file needed for a message" : `Choose or drop a ${kind.value}`;
+    };
+    kind.addEventListener("change", refreshFileRequirement);
+    refreshFileRequirement();
+    ["dragenter", "dragover"].forEach((eventName) => dropzone.addEventListener(eventName, (event) => { event.preventDefault(); dropzone.classList.add("is-dragging"); }));
+    ["dragleave", "drop"].forEach((eventName) => dropzone.addEventListener(eventName, (event) => { event.preventDefault(); dropzone.classList.remove("is-dragging"); }));
+    dropzone.addEventListener("drop", (event) => { if (event.dataTransfer.files.length) input.files = event.dataTransfer.files; });
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const data = Object.fromEntries(new FormData(form).entries());
+      const file = input.files[0];
+      const status = $("[data-memory-status]");
+      if (data.kind !== "message" && !file) { status.textContent = "Choose a file first, or switch to Written message."; return; }
+      if (file && file.size > 25 * 1024 * 1024) { status.textContent = "That file is over 25MB — please choose a smaller one."; return; }
+      if (config.UPLOAD_ENDPOINT) {
+        const body = new FormData(form);
+        try { await fetch(config.UPLOAD_ENDPOINT, { method: "POST", body }); } catch { status.textContent = "Cloud upload failed; saving this memory locally instead."; }
+      }
       const existing = read(storageKeys.media, []);
-      const uploads = await Promise.all(files.map(async (file) => ({ name: "Your upload", url: await fileToDataUrl(file), type: file.type.startsWith("video") ? "video" : "image", createdAt: new Date().toISOString(), tilt: `${(Math.random() * 4 - 2).toFixed(1)}deg` })));
-      existing.push(...uploads);
-      write(storageKeys.media, existing); renderMemories(); input.value = ""; toast("Your media is on the wall for this browser.");
+      const item = { name: data.name, caption: data.caption, type: data.kind, createdAt: new Date().toISOString(), tilt: `${(Math.random() * 4 - 2).toFixed(1)}deg` };
+      if (file) item.url = await fileToDataUrl(file);
+      existing.push(item);
+      write(storageKeys.media, existing); memoryPage = Math.ceil((allPhotos.length + read(storageKeys.notes, []).length + existing.length) / 10) - 1; renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = "Added — it is now in the memory carousel on this browser."; toast("Memory added to the carousel.");
     });
+  };
+
+  const setupMemoryCarousel = () => {
+    $("[data-memory-prev]").addEventListener("click", () => { memoryPage -= 1; renderMemories(); });
+    $("[data-memory-next]").addEventListener("click", () => { memoryPage += 1; renderMemories(); });
   };
 
   const setupPayments = () => $("[data-payment-action]").addEventListener("click", () => {
@@ -193,5 +328,5 @@
     sections.forEach((section) => observer.observe(section));
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); setupCountdown(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupUploads(); setupPayments(); setupCalendar(); setupNavHighlight();
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); setupGate(); setupCountdown(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupNavHighlight();
 })();
