@@ -293,8 +293,9 @@
     const rsvps = read(storageKeys.rsvps, []); const existing = rsvps.findIndex((item) => item.name.toLowerCase() === data.name.toLowerCase());
     if (existing >= 0) rsvps[existing] = data; else rsvps.push(data); write(storageKeys.rsvps, rsvps); renderAttendees();
     if (config.RSVP_ENDPOINT) { try { await fetch(config.RSVP_ENDPOINT, { method: "POST", body: new FormData(form), mode: "no-cors" }); } catch { /* local save still succeeds */ } }
-    $("[data-rsvp-status]").textContent = `Saved — see you ${data.days.length ? data.days.join(", ") : "when you can"}!`;
-    toast("RSVP saved — refresh the page and it will still be here."); form.reset();
+    const rsvpMessage = config.RSVP_ENDPOINT ? `RSVP submitted — see you ${data.days.length ? data.days.join(", ") : "when you can"}!` : "RSVP saved in this browser. Shared RSVP syncing is not connected yet.";
+    $("[data-rsvp-status]").textContent = rsvpMessage;
+    toast(config.RSVP_ENDPOINT ? "RSVP submitted." : "RSVP saved locally — shared syncing is not connected yet."); form.reset();
     });
   };
 
@@ -303,7 +304,7 @@
     if (!form) return;
     form.addEventListener("submit", (event) => {
     event.preventDefault(); const data = Object.fromEntries(new FormData(event.currentTarget).entries()); data.createdAt = new Date().toISOString(); data.tilt = `${(Math.random() * 4 - 2).toFixed(1)}deg`;
-    const notes = read(storageKeys.notes, []); notes.push(data); write(storageKeys.notes, notes); renderMemories(); event.currentTarget.reset(); $("[data-note-status]").textContent = "Your note is on the memory wall."; toast("Message added to the memory wall.");
+    const notes = read(storageKeys.notes, []); notes.push(data); write(storageKeys.notes, notes); renderMemories(); event.currentTarget.reset(); $("[data-note-status]").textContent = config.UPLOAD_ENDPOINT ? "Your note is on the shared memory wall." : "Your note is saved on this browser's memory wall."; toast(config.UPLOAD_ENDPOINT ? "Message added to the shared memory wall." : "Message saved locally to the memory wall.");
     });
   };
 
@@ -383,7 +384,7 @@
       if (file) item.url = await fileToDataUrl(file);
       existing.push(item);
       try { write(storageKeys.media, existing); } catch { status.textContent = "That capture is too large for browser-only saving. Add an upload endpoint in config.js for larger shared media."; return; }
-      recordedFile = null; memoryPage = Math.ceil((allPhotos.length + read(storageKeys.notes, []).length + existing.length) / 10) - 1; renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = "Added — it is now in the memory carousel on this browser."; toast("Memory added to the carousel.");
+      recordedFile = null; memoryPage = Math.ceil((allPhotos.length + read(storageKeys.notes, []).length + existing.length) / 10) - 1; renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = config.UPLOAD_ENDPOINT ? "Added to the shared memory carousel." : "Added to this browser's memory carousel only."; toast(config.UPLOAD_ENDPOINT ? "Memory added to the shared carousel." : "Memory saved locally to the carousel.");
     });
   };
 
