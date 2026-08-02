@@ -58,6 +58,8 @@
   let sharedNotes = [];
   let sharedMedia = [];
   let memoryPage = 0;
+  let marisaWrappedSlide = 0;
+  let marisaWrappedMode = false;
   const contributions = [
     { id: "boat", title: "Boat hire", detail: "2 hours · Saturday before sunset", icon: "ph-sailboat", amount: () => config.contributionAmounts?.boat ?? 31 },
     { id: "cinema", title: "Vue cinema", detail: "Spider-Man: Brand New Day", icon: "ph-film-strip", amount: () => config.contributionAmounts?.cinema ?? 12 },
@@ -85,6 +87,112 @@
     return Boolean(response?.name);
   };
   const mergeShared = (shared, local) => [...shared, ...local.filter((item) => !shared.some((remote) => remote.createdAt && remote.createdAt === item.createdAt && remote.name === item.name))];
+
+  const getWrappedData = () => {
+    const localRsvps = read(storageKeys.rsvps, []);
+    const rsvps = [...liveRsvps, ...localRsvps].reduce((list, person) => {
+      if (!person?.name || list.some((item) => item.name.toLowerCase() === person.name.toLowerCase())) return list;
+      list.push(person);
+      return list;
+    }, []);
+    const notes = mergeShared(sharedNotes, read(storageKeys.notes, [])).map((note) => ({ ...note, type: "message", text: note.body || note.caption }));
+    const media = mergeShared(sharedMedia, read(storageKeys.media, [])).map((item) => ({ ...item, text: item.caption }));
+    const uploads = [...notes, ...media].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    return { rsvps, notes, media, uploads };
+  };
+
+  const wrappedEmpty = (message, detail = "The first memory is still waiting to be shared.") => `<div class="wrapped-empty"><i class="ph ph-sparkle" aria-hidden="true"></i><strong>${escapeHtml(message)}</strong><span>${escapeHtml(detail)}</span></div>`;
+
+  const wrappedMediaCard = (item) => {
+    const label = item.type === "video" ? "video" : item.type === "audio" ? "voice note" : "photo";
+    let content = `<div class="wrapped-media-placeholder"><i class="ph ${item.type === "video" ? "ph-play-circle" : "ph-image"}" aria-hidden="true"></i></div>`;
+    if (item.url && item.type === "video") content = `<video controls preload="metadata" src="${escapeHtml(item.url)}" aria-label="Video shared by ${escapeHtml(item.name || "a friend")}"></video>`;
+    if (item.url && item.type === "image") content = `<img loading="lazy" decoding="async" src="${escapeHtml(item.url)}" alt="${escapeHtml(item.name || "A friend")} shared a birthday photo" />`;
+    return `<figure class="wrapped-upload-card wrapped-upload-${label}" style="--tilt:${item.tilt || "0deg"}">${content}<figcaption><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.caption || label)}</span></figcaption></figure>`;
+  };
+
+  const wrappedArchiveCard = (item) => `<figure class="wrapped-upload-card wrapped-archive-card" style="--tilt:${item.tilt || "0deg"}"><img loading="lazy" decoding="async" src="${escapeHtml(item.src)}" alt="${escapeHtml(item.alt)}" /><figcaption><strong>Marisa archive</strong><span>${escapeHtml(item.caption)}</span></figcaption></figure>`;
+
+  const renderMarisaWrapped = () => {
+    const node = $("[data-marisa-wrapped]");
+    if (!node) return;
+    const { rsvps, notes, media, uploads } = getWrappedData();
+    const names = rsvps.map((person) => person.name).slice(0, 12);
+    const words = notes.slice(-6).reverse();
+    const moments = media.filter((item) => item.type === "image" || item.type === "video").slice(-6).reverse();
+    const voiceNotes = media.filter((item) => item.type === "audio").slice(-4).reverse();
+    const archiveChapterOne = archivePhotos.slice(0, 6);
+    const archiveChapterTwo = archivePhotos.slice(6, 12);
+    const itinerary = [
+      { date: "FRI · 21 AUG", label: "Main birthday day", items: [["09:00", "The Breakfast Club", "Here East, Queen Elizabeth Olympic Park, Hackney Wick"], ["14:00", "Park picnic + drinks", "Queen Elizabeth Olympic Park · indoor backup if raining"], ["19:00", "Cake, food, gifts + games", "At the accommodation · final address shared after booking"]] },
+      { date: "SAT · 22 AUG", label: "Kingston activity day", items: [["12:00", "Pub or restaurant meet", "Kingston upon Thames"], ["15:00", "Boat hire", "Kingston upon Thames riverfront · final meeting point to be confirmed"]] },
+      { date: "SUN · 23 AUG", label: "Cinema & nightlife day", items: [["11:00", "Accommodation meet", "Games, drinks + getting ready · final address shared after booking"], ["16:00", "Vue cinema: Spider-Man: Brand New Day", "Vue Croydon Purley Way"], ["20:00", "Night out", "Location to be confirmed"]] }
+    ];
+    const itineraryCards = itinerary.map((day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`).join("");
+    const wordCards = words.length ? words.map((item) => `<article class="wrapped-quote"><span class="wrapped-quote-mark">“</span><blockquote>${escapeHtml(item.text || "A little birthday love for you.")}</blockquote><footer><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.mood || "sent with love")}</span></footer></article>`).join("") : wrappedEmpty("No words yet", "Your people can still leave something for the memory wall.");
+    const momentCards = moments.length ? moments.map(wrappedMediaCard).join("") : wrappedEmpty("No uploads yet", "Photos and videos will appear here as people add them.");
+    const voiceCards = voiceNotes.length ? voiceNotes.map((item) => `<article class="wrapped-voice-card"><div class="wrapped-voice-icon"><i class="ph ph-waveform" aria-hidden="true"></i></div><div><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.caption || "A voice note for Marisa")}</span>${item.url ? `<audio controls preload="metadata" src="${escapeHtml(item.url)}" aria-label="Voice note from ${escapeHtml(item.name || "a friend")}"></audio>` : ""}</div></article>`).join("") : wrappedEmpty("No voice notes yet", "Someone should definitely press record.");
+    const slideCount = 9;
+
+    node.innerHTML = `<div class="wrapped-progress" style="--wrapped-count:${slideCount}" aria-label="Wrapped progress">${Array.from({ length: slideCount }, (_, index) => `<span data-wrapped-progress="${index}"></span>`).join("")}</div>
+      <div class="wrapped-topbar"><span class="wrapped-brand"><i class="ph ph-sparkle" aria-hidden="true"></i> Marisa Wrapped</span><span>${uploads.length} ${uploads.length === 1 ? "memory" : "memories"} collected</span></div>
+      <div class="wrapped-stage">
+        <article class="wrapped-slide wrapped-slide-cover" data-wrapped-slide="0">
+          <div class="wrapped-cover-copy"><p class="wrapped-kicker">YOUR 2026 BIRTHDAY STORY</p><h1>Marisa<br /><em>Wrapped.</em></h1><p class="wrapped-subtitle">A little replay of the people, words and moments that make you so loved.</p><button class="wrapped-start" type="button" data-wrapped-next>Tap to begin <i class="ph ph-arrow-right" aria-hidden="true"></i></button></div>
+          <div class="wrapped-cover-art"><div class="wrapped-orbit wrapped-orbit-one"></div><div class="wrapped-orbit wrapped-orbit-two"></div><figure><img src="assets/photos/marisa-bouquet.jpeg" alt="Marisa holding a bouquet beside the water" /></figure><span class="wrapped-sticker">21<br /><small>AUG</small></span></div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-people" data-wrapped-slide="1">
+          <div><p class="wrapped-kicker">THE PEOPLE EDIT</p><h2>You had<br /><em>your people.</em></h2><p class="wrapped-number">${rsvps.length}</p><p class="wrapped-stat">${rsvps.length === 1 ? "person has" : "people have"} confirmed so far — and the weekend is still being written.</p></div>
+          <div class="wrapped-name-cloud">${names.length ? names.map((name, index) => `<span class="wrapped-name-chip wrapped-name-chip-${index % 4}">${escapeHtml(name)}</span>`).join("") : wrappedEmpty("The guest list is still loading", "Only real RSVP responses will appear here.")}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-words" data-wrapped-slide="2">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">MOST REPLAYED FEELING</p><h2>Words<br /><em>for you.</em></h2><p>Every message is a tiny reminder that you are the main character.</p></div><div class="wrapped-quote-grid">${wordCards}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-moments" data-wrapped-slide="3">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE CAMERA ROLL</p><h2>Moments<br /><em>with you.</em></h2><p>${moments.length ? `${moments.length} new uploads from your favourite people.` : "The next memory is waiting for its close-up."}</p></div><div class="wrapped-upload-grid">${momentCards}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-archive" data-wrapped-slide="4">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">FROM THE ARCHIVE</p><h2>The original<br /><em>favourites.</em></h2><p>A little selection from the Marisa archive — kept here because these moments deserve another replay.</p></div><div class="wrapped-upload-grid">${archiveChapterOne.map(wrappedArchiveCard).join("")}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-archive wrapped-slide-archive-two" data-wrapped-slide="5">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">STILL ICONIC</p><h2>More of<br /><em>your era.</em></h2><p>The archive continues. Same star, different lighting.</p></div><div class="wrapped-upload-grid">${archiveChapterTwo.map(wrappedArchiveCard).join("")}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-voices" data-wrapped-slide="6">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">YOUR BONUS TRACKS</p><h2>Press<br /><em>play.</em></h2><p>Voice notes sound better when they are meant just for you.</p></div><div class="wrapped-voice-list">${voiceCards}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="7">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN THREE ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-finale" data-wrapped-slide="8">
+          <div class="wrapped-finale-spark">✦</div><p class="wrapped-kicker">THAT'S A WRAP</p><h2>Happy birthday,<br /><em>Marisa.</em></h2><p>Three days, a hundred little moments, and a whole lot of love still to come.</p><div class="wrapped-finale-counts"><span><strong>${uploads.length}</strong> memories</span><span><strong>${rsvps.length}</strong> real responses</span></div><button class="wrapped-replay" type="button" data-wrapped-replay><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> Replay your Wrapped</button></article>
+      </div><button class="wrapped-arrow wrapped-arrow-prev" type="button" data-wrapped-prev aria-label="Previous Wrapped slide"><i class="ph ph-arrow-left" aria-hidden="true"></i></button><button class="wrapped-arrow wrapped-arrow-next" type="button" data-wrapped-next aria-label="Next Wrapped slide"><i class="ph ph-arrow-right" aria-hidden="true"></i></button>`;
+    node.closest(".wrapped-experience")?.scrollTo(0, 0);
+    const slides = $$("[data-wrapped-slide]", node);
+    marisaWrappedSlide = Math.max(0, Math.min(marisaWrappedSlide, slides.length - 1));
+    slides.forEach((slide, index) => slide.classList.toggle("is-active", index === marisaWrappedSlide));
+    $$('[data-wrapped-progress]', node).forEach((bar, index) => bar.classList.toggle("is-active", index <= marisaWrappedSlide));
+    const previous = $("[data-wrapped-prev]", node);
+    const next = $(".wrapped-arrow-next", node);
+    if (previous) previous.disabled = marisaWrappedSlide === 0;
+    if (next) next.hidden = marisaWrappedSlide >= slides.length - 1;
+  };
+
+  const setupMarisaWrapped = () => {
+    const node = $("[data-marisa-wrapped]");
+    if (!node || node.dataset.ready) return;
+    node.dataset.ready = "true";
+    node.addEventListener("click", (event) => {
+      if (event.target.closest("[data-wrapped-replay]")) { marisaWrappedSlide = 0; renderMarisaWrapped(); return; }
+      if (event.target.closest("[data-wrapped-next]")) { marisaWrappedSlide += 1; renderMarisaWrapped(); return; }
+      if (event.target.closest("[data-wrapped-prev]")) { marisaWrappedSlide -= 1; renderMarisaWrapped(); }
+    });
+    document.addEventListener("keydown", (event) => {
+      if (!marisaWrappedMode) return;
+      if (event.key === "ArrowRight" || event.key === " ") { event.preventDefault(); marisaWrappedSlide += 1; renderMarisaWrapped(); }
+      if (event.key === "ArrowLeft") { event.preventDefault(); marisaWrappedSlide -= 1; renderMarisaWrapped(); }
+    });
+    renderMarisaWrapped();
+  };
 
   let toastTimer;
   const toast = (message) => {
@@ -140,6 +248,7 @@
       sharedNotes = sharedItems(notes);
       sharedMedia = sharedItems(media);
       renderAttendees(); renderMemories();
+      if (marisaWrappedMode) renderMarisaWrapped();
     } catch {
       /* The local wall remains usable if shared storage is unavailable. */
     }
@@ -285,8 +394,10 @@
     document.body.classList.add("is-unlocked");
     const marisaView = $("[data-marisa-view]");
     if (mode === "marisa") {
+      marisaWrappedMode = true;
       document.body.classList.add("is-marisa-mode");
       marisaView.hidden = false;
+      renderMarisaWrapped();
     }
   };
 
@@ -309,9 +420,10 @@
       status.textContent = "Nope. Nothing to see here 🤨";
       form.reset();
     });
-    $("[data-marisa-back]").addEventListener("click", () => {
+    $("[data-marisa-back]")?.addEventListener("click", () => {
       document.body.classList.remove("is-marisa-mode");
       $("[data-marisa-view]").hidden = true;
+      marisaWrappedMode = false;
       try { sessionStorage.setItem("marisa-birthday-access", "guest"); } catch { /* no-op */ }
     });
   };
@@ -411,7 +523,8 @@
       input.required = kind.value !== "message";
       input.accept = kind.value === "message" ? "" : `${kind.value}/*`;
       input.setAttribute("capture", captureMode);
-      dropzone.querySelector("strong").textContent = kind.value === "message" ? "No file needed for a message" : `Choose or drop a ${kind.value}`;
+      const uploadLabels = { image: "photo", video: "video", audio: "voice note" };
+      dropzone.querySelector("strong").textContent = kind.value === "message" ? "No file needed for a written message" : `Choose or drop a ${uploadLabels[kind.value] ?? "file"}`;
       dropzone.querySelector("span").textContent = kind.value === "message" ? "Written messages are shared instantly" : "Images, videos and voice notes · max 8MB after automatic image compression";
       if (kind.value !== "audio") recordedFile = null;
     };
@@ -645,5 +758,5 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading();
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading();
 })();
