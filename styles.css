@@ -277,6 +277,13 @@ legend { margin-bottom: 9px; }
 .day-checks input:checked + span { border-color: var(--coral); background: var(--coral); color: var(--aubergine); }
 .day-checks input:focus-visible + span { outline: 2px solid var(--cream); outline-offset: 2px; }
 .form-status { min-height: 1.2em; margin: 0; color: var(--coral); font-size: 12px; }
+.form-hint { margin: -5px 0 2px; color: rgba(244, 234, 217, .58); font-size: 11px; }
+.rsvp-pack { margin-top: 6px; padding: 18px; border: 1px solid rgba(237, 121, 93, .42); background: rgba(37, 16, 29, .28); }
+.rsvp-pack h3 { margin: 2px 0 4px; color: var(--cream); font-family: var(--display); font-size: 28px; font-weight: 400; }
+.rsvp-pack > p:not(.eyebrow) { margin: 0 0 12px; color: rgba(244, 234, 217, .68); font-size: 12px; }
+.rsvp-pack-links { display: grid; gap: 8px; }
+.rsvp-pack-links a { display: flex; align-items: center; justify-content: space-between; gap: 10px; color: var(--coral); font-size: 12px; font-weight: 700; }
+.rsvp-pack-links a:hover, .rsvp-pack-links a:focus-visible { color: var(--cream); }
 
 .details-section { padding: 86px 7vw; }
 .details-grid { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(280px, .6fr); gap: 24px; max-width: 1180px; }

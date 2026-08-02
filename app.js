@@ -1,5 +1,6 @@
 (() => {
   const config = window.MARISA_CONFIG || {};
+  const siteBase = (config.PUBLIC_SITE_URL || `${window.location.origin}${window.location.pathname.replace(/[^/]*$/, "")}`).replace(/\/?$/, "/");
   const storageKeys = { rsvps: "marisa-birthday-rsvps", notes: "marisa-birthday-notes", media: "marisa-birthday-media", payments: "marisa-birthday-payments" };
   const photos = [
     { src: "assets/photos/optimized/marisa-roses.webp", caption: "The birthday girl", alt: "Marisa holding roses beside the water", tilt: "-2deg" },
@@ -443,11 +444,15 @@
         const body = new FormData(form);
         body.set("_subject", "Marisa birthday weekend RSVP");
         body.set("_template", "table");
+        body.set("_replyto", data.email);
+        body.set("_autoresponse", `Thanks for your RSVP, ${data.name}!\n\nYour weekend pack:\nItinerary: ${siteBase}plan.html\nCalendar: ${siteBase}marisa-birthday-weekend.ics\nUpload a memory: ${siteBase}memories.html#memories\n\nSee you at Marisa's birthday weekend.`);
         await fetch(config.RSVP_ENDPOINT, { method: "POST", body, mode: "no-cors" });
       } catch { /* local save still succeeds */ }
     }
     const rsvpMessage = config.RSVP_ENDPOINT ? `RSVP submitted — see you ${data.days.length ? data.days.join(", ") : "when you can"}!` : "RSVP saved in this browser. Shared RSVP syncing is not connected yet.";
     $("[data-rsvp-status]").textContent = rsvpMessage;
+    const pack = $("[data-rsvp-pack]", form);
+    if (pack) pack.hidden = false;
     toast(config.RSVP_ENDPOINT ? "RSVP submitted." : "RSVP saved locally — shared syncing is not connected yet."); form.reset();
     });
   };

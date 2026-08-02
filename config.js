@@ -7,6 +7,7 @@ window.MARISA_CONFIG = {
   FIREBASE_DATABASE_URL: "https://marisa-birthday-2026-default-rtdb.europe-west1.firebasedatabase.app",
   FIREBASE_ACCESS_KEY: "happybirthday",
   LIVE_RSVPS_URL: "rsvps.json",
+  PUBLIC_SITE_URL: "https://jakkuazzo.github.io/marisa-birthday-weekend/",
   SHARED_CALENDAR_URL: "",
   MONZO_PAYMENT_URL: "https://monzo.me/nathanbrownbennett?h=sWJ2zY&account_type=personal",
   contributionAmounts: {
