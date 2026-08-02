@@ -47,6 +47,16 @@
     ["marisa-white-dress.jpeg", "White dress", "Marisa smiling in a white dress"]
   ].map(([file, caption, alt], index) => ({ src: `assets/photos/optimized/${file.replace(/\.jpeg$/, ".webp")}`, caption, alt, tilt: `${index % 2 ? 1 : -1}deg` }));
   const allPhotos = [...photos, ...archivePhotos];
+  const partyObstaclePhotos = [
+    "assets/photos/optimized/marisa-hat.webp",
+    "assets/photos/optimized/marisa-tree.webp",
+    "assets/photos/optimized/marisa-magenta.webp",
+    "assets/photos/optimized/family-table.webp",
+    "assets/photos/optimized/group-bus.webp",
+    "assets/photos/optimized/marisa-gold-dress.webp",
+    "assets/photos/optimized/marisa-bus.webp",
+    "assets/photos/optimized/friends-outdoors.webp"
+  ];
   const firstBirthdayMedia = {
     video: "assets/media/marisa-first-birthday.mp4",
     poster: "assets/photos/optimized/marisa-bouquet.webp",
@@ -65,6 +75,7 @@
   let memoryPage = 0;
   let marisaWrappedSlide = 0;
   let marisaWrappedMode = false;
+  let partyGame = null;
   const contributions = [
     { id: "gift", title: "Gift fund", detail: "Optional group gift for Marisa", icon: "ph-gift", amount: () => config.contributionAmounts?.gift ?? 15 }
   ];
@@ -390,11 +401,134 @@
     return londonDate === "21/08/2026";
   };
 
+  const setupPartyGame = () => {
+    if (partyGame) return;
+    const overlay = document.createElement("section");
+    overlay.className = "party-game";
+    overlay.hidden = true;
+    overlay.setAttribute("aria-labelledby", "party-game-title");
+    overlay.innerHTML = `<div class="party-game-shell"><div class="party-game-header"><div><p class="party-game-eyebrow">PARTY MODE</p><h1 id="party-game-title">Flappy <em>Marisa.</em></h1><p class="party-game-copy">Help Marisa fly between the birthday memories. Tap, click or press Space to flap.</p></div><button class="party-game-close" type="button" data-party-close aria-label="Close party game"><i class="ph ph-x" aria-hidden="true"></i></button></div><div class="party-game-hud"><span>Score <strong data-party-score>0</strong></span><span>Best <strong data-party-best>0</strong></span></div><div class="party-game-board"><canvas width="800" height="500" data-party-canvas aria-label="Flappy Marisa birthday game"></canvas><div class="party-game-board-message" data-party-message>Ready when you are ✦</div></div><div class="party-game-actions"><button class="button button-coral" type="button" data-party-start>Start game</button><button class="button button-ghost" type="button" data-party-close>Back to weekend</button></div><p class="party-game-status" data-party-status>Fly through the photo gates without touching them.</p></div>`;
+    document.body.appendChild(overlay);
+    const canvas = $("[data-party-canvas]", overlay);
+    const context = canvas.getContext("2d");
+    const startButton = $("[data-party-start]", overlay);
+    const scoreNode = $("[data-party-score]", overlay);
+    const bestNode = $("[data-party-best]", overlay);
+    const messageNode = $("[data-party-message]", overlay);
+    const statusNode = $("[data-party-status]", overlay);
+    const sprite = new Image();
+    sprite.src = "assets/game/marisa-sprite.jpg";
+    const obstacleImages = partyObstaclePhotos.map((src) => { const image = new Image(); image.src = src; return image; });
+    const width = canvas.width;
+    const height = canvas.height;
+    const bird = { x: 174, y: 240, radius: 28, velocity: 0 };
+    const gates = [];
+    let state = "ready";
+    let score = 0;
+    let best = Number(read("marisa-party-best", 0)) || 0;
+    let frameId = 0;
+    let lastFrame = 0;
+    let photoIndex = 0;
+    bestNode.textContent = best;
+    const roundedRect = (x, y, rectWidth, rectHeight, radius) => {
+      context.beginPath();
+      context.roundRect(x, y, rectWidth, rectHeight, radius);
+    };
+    const coverImage = (image, x, y, rectWidth, rectHeight) => {
+      if (!image.complete || !image.naturalWidth) { context.fillStyle = "#5e2d64"; context.fillRect(x, y, rectWidth, rectHeight); return; }
+      const scale = Math.max(rectWidth / image.naturalWidth, rectHeight / image.naturalHeight);
+      const drawWidth = image.naturalWidth * scale;
+      const drawHeight = image.naturalHeight * scale;
+      context.drawImage(image, x + (rectWidth - drawWidth) / 2, y + (rectHeight - drawHeight) / 2, drawWidth, drawHeight);
+    };
+    const drawGate = (gateX, gateY, gateHeight, image, upsideDown = false) => {
+      context.save();
+      roundedRect(gateX, gateY, 92, gateHeight, 18);
+      context.clip();
+      if (upsideDown) { context.translate(gateX + 46, gateY + gateHeight / 2); context.rotate(Math.PI); coverImage(image, -46, -gateHeight / 2, 92, gateHeight); }
+      else coverImage(image, gateX, gateY, 92, gateHeight);
+      context.restore();
+      context.save();
+      roundedRect(gateX, gateY, 92, gateHeight, 18);
+      context.strokeStyle = "rgba(244, 234, 217, .88)";
+      context.lineWidth = 7;
+      context.stroke();
+      context.restore();
+      context.fillStyle = "rgba(237, 121, 93, .9)";
+      context.fillRect(gateX - 7, upsideDown ? gateY + gateHeight - 12 : gateY, 106, 12);
+    };
+    const draw = () => {
+      const background = context.createLinearGradient(0, 0, 0, height);
+      background.addColorStop(0, "#31142d"); background.addColorStop(1, "#8c4168");
+      context.fillStyle = background; context.fillRect(0, 0, width, height);
+      context.fillStyle = "rgba(244, 234, 217, .08)";
+      for (let index = 0; index < 12; index += 1) { context.beginPath(); context.arc((index * 93 + 38) % width, 65 + (index % 4) * 92, 2 + index % 3, 0, Math.PI * 2); context.fill(); }
+      gates.forEach((gate) => { const image = obstacleImages[gate.photo]; drawGate(gate.x, 0, gate.topHeight, image, true); drawGate(gate.x, gate.topHeight + gate.gap, height - gate.topHeight - gate.gap, image); });
+      context.fillStyle = "rgba(33, 13, 40, .24)"; context.fillRect(0, height - 26, width, 26);
+      context.save();
+      context.beginPath(); context.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2); context.clip();
+      context.translate(bird.x, bird.y); context.rotate(Math.max(-.28, Math.min(.34, bird.velocity * .035))); if (sprite.complete && sprite.naturalWidth) context.drawImage(sprite, -bird.radius, -bird.radius, bird.radius * 2, bird.radius * 2); else { context.fillStyle = "#ed795d"; context.fillRect(-bird.radius, -bird.radius, bird.radius * 2, bird.radius * 2); } context.restore();
+      context.beginPath(); context.arc(bird.x, bird.y, bird.radius, 0, Math.PI * 2); context.strokeStyle = "#f4ead9"; context.lineWidth = 4; context.stroke();
+    };
+    const setState = (nextState) => {
+      state = nextState;
+      messageNode.hidden = nextState === "playing";
+      startButton.hidden = nextState === "playing";
+      startButton.textContent = nextState === "over" ? "Try again" : "Start game";
+      if (nextState === "ready") statusNode.textContent = "Fly through the photo gates without touching them.";
+      if (nextState === "playing") statusNode.textContent = "Tap, click or press Space to flap.";
+      if (nextState === "over") statusNode.textContent = `You scored ${score}. Give it another go for Marisa ✦`;
+    };
+    const reset = () => {
+      gates.length = 0; score = 0; scoreNode.textContent = "0"; bird.y = 240; bird.velocity = 0; photoIndex = 0;
+      for (let index = 0; index < 4; index += 1) gates.push({ x: 560 + index * 250, topHeight: 80 + Math.random() * 150, gap: 170, photo: index % obstacleImages.length, counted: false });
+      setState("ready"); draw();
+    };
+    const endGame = () => {
+      setState("over");
+      if (score > best) { best = score; bestNode.textContent = best; write("marisa-party-best", best); }
+    };
+    const flap = () => {
+      if (state === "ready") setState("playing");
+      if (state === "over") { reset(); setState("playing"); }
+      bird.velocity = -7.4;
+    };
+    const update = (scale) => {
+      bird.velocity += .42 * scale; bird.y += bird.velocity * scale;
+      gates.forEach((gate) => {
+        gate.x -= 2.55 * scale;
+        if (!gate.counted && gate.x + 92 < bird.x) { gate.counted = true; score += 1; scoreNode.textContent = score; }
+      });
+      while (gates.length && gates[0].x < -110) { gates.shift(); const lastGate = gates[gates.length - 1]; gates.push({ x: lastGate.x + 250, topHeight: 80 + Math.random() * 150, gap: 170, photo: photoIndex++ % obstacleImages.length, counted: false }); }
+      const hitWall = bird.y - bird.radius < 0 || bird.y + bird.radius > height - 26;
+      const hitGate = gates.some((gate) => bird.x + bird.radius > gate.x && bird.x - bird.radius < gate.x + 92 && (bird.y - bird.radius < gate.topHeight || bird.y + bird.radius > gate.topHeight + gate.gap));
+      if (hitWall || hitGate) endGame();
+    };
+    const loop = (timestamp) => {
+      if (overlay.hidden) return;
+      const elapsed = Math.min(36, timestamp - lastFrame || 16.67); lastFrame = timestamp;
+      if (state === "playing") update(elapsed / 16.67);
+      draw(); frameId = window.requestAnimationFrame(loop);
+    };
+    const show = () => { overlay.hidden = false; document.body.classList.add("is-party-game-open"); reset(); lastFrame = performance.now(); window.cancelAnimationFrame(frameId); frameId = window.requestAnimationFrame(loop); };
+    const hide = () => { overlay.hidden = true; document.body.classList.remove("is-party-game-open"); window.cancelAnimationFrame(frameId); try { sessionStorage.setItem("marisa-birthday-access", "guest"); } catch { /* no-op */ } };
+    startButton.addEventListener("click", () => { if (state === "over") reset(); setState("playing"); flap(); });
+    canvas.addEventListener("pointerdown", (event) => { event.preventDefault(); flap(); });
+    document.addEventListener("keydown", (event) => { if (overlay.hidden) return; if (event.key === " " || event.key === "ArrowUp") { event.preventDefault(); flap(); } });
+    $$('[data-party-close]', overlay).forEach((button) => button.addEventListener("click", hide));
+    partyGame = { show, hide };
+  };
+
   const unlockWebsite = (mode) => {
     try { sessionStorage.setItem("marisa-birthday-access", mode); } catch { /* private browsing can disable storage */ }
     document.documentElement.classList.remove("is-gated");
     document.body.classList.add("is-unlocked");
     const marisaView = $("[data-marisa-view]");
+    if (mode === "party") {
+      document.body.classList.add("is-party-mode");
+      partyGame?.show();
+      return;
+    }
     if (mode === "marisa") {
       marisaWrappedMode = true;
       document.body.classList.add("is-marisa-mode");
@@ -406,13 +540,14 @@
   const setupGate = () => {
     let access = "";
     try { access = sessionStorage.getItem("marisa-birthday-access") || ""; } catch { /* continue locked */ }
-    if (access === "guest" || access === "marisa") { unlockWebsite(access); return; }
+    if (access === "guest" || access === "marisa" || access === "party") { unlockWebsite(access); return; }
     const form = $("[data-gate-form]");
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const password = new FormData(form).get("password").toString().trim().toLowerCase();
       const status = $("[data-gate-status]");
       if (password === "happybirthday") { status.textContent = "Welcome in — keep the link within the group."; unlockWebsite("guest"); return; }
+      if (password === "party") { status.textContent = "Party mode unlocked ✦"; unlockWebsite("party"); return; }
       if (password === "210803") {
         if (isBirthdayToday()) { unlockWebsite("marisa"); return; }
         status.textContent = "nuh uhhhh you gotta wait silly billy";
@@ -822,5 +957,5 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading();
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupPartyGame(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading();
 })();
