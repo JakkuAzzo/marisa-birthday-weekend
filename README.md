@@ -15,6 +15,7 @@ A static GitHub Pages event hub for Marisa's birthday weekend, 21–24 August 20
 - Monzo payment link with a post-payment name, amount and reference report
 - image/video/voice-note/message uploader and paged memory carousel
 - microphone recording plus direct photo/video capture controls where the browser supports them
+- first-birthday video replay with a separate lightweight soundtrack player, both lazy-loaded from `assets/media/`
 
 ## Connecting the live services
 
