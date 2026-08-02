@@ -444,8 +444,13 @@
     const leaderboardKey = "marisa-party-leaderboard";
     bestNode.textContent = best;
     const sortLeaderboard = (entries) => {
-      const unique = [...new Map(entries.filter((entry) => entry && String(entry.name || "").trim() && Number.isFinite(Number(entry.score))).map((entry) => [entry.id || `${entry.name}-${entry.score}-${entry.createdAt}`, entry])).values()];
-      return unique.sort((a, b) => Number(b.score) - Number(a.score) || new Date(a.createdAt || 0) - new Date(b.createdAt || 0)).slice(0, 10);
+      const highestByPlayer = new Map();
+      entries.filter((entry) => entry && String(entry.name || "").trim() && Number.isFinite(Number(entry.score))).forEach((entry) => {
+        const key = String(entry.name).trim().toLowerCase();
+        const current = highestByPlayer.get(key);
+        if (!current || Number(entry.score) > Number(current.score) || (Number(entry.score) === Number(current.score) && new Date(entry.createdAt || 0) > new Date(current.createdAt || 0))) highestByPlayer.set(key, { ...entry, name: String(entry.name).trim() });
+      });
+      return [...highestByPlayer.values()].sort((a, b) => Number(b.score) - Number(a.score) || new Date(a.createdAt || 0) - new Date(b.createdAt || 0)).slice(0, 10);
     };
     const renderLeaderboard = () => {
       leaderboardNode.innerHTML = leaderboard.length ? leaderboard.map((entry, index) => `<li><span class="leaderboard-rank">${String(index + 1).padStart(2, "0")}</span><span class="leaderboard-name">${escapeHtml(entry.name)}</span><strong>${Number(entry.score)}</strong></li>`).join("") : `<li class="party-game-empty">No scores yet — be the first.</li>`;
@@ -583,16 +588,20 @@
       if (!name) { saveStatusNode.textContent = "Add your name first."; nameInput.focus(); return; }
       const entry = { id: `score-${Date.now()}-${Math.random().toString(16).slice(2)}`, name, score, createdAt: new Date().toISOString() };
       const localEntries = read(leaderboardKey, []);
+      const previousBest = localEntries.find((candidate) => String(candidate.name || "").trim().toLowerCase() === name.toLowerCase());
+      const personalBest = !previousBest || score > Number(previousBest.score);
       write(leaderboardKey, sortLeaderboard([...localEntries, entry]));
       leaderboard = sortLeaderboard([...leaderboard, entry]);
       renderLeaderboard();
       const saveButton = $("button[type=submit]", resultsForm);
       saveButton.disabled = true;
-      saveStatusNode.textContent = "Saving your score…";
+      saveStatusNode.textContent = personalBest ? "Saving your new personal best…" : "Checking your saved best…";
       let synced = false;
-      if (sharedBase) { try { synced = await pushShared("leaderboard", entry); } catch { /* local score remains saved */ } }
+      if (sharedBase && personalBest) { try { synced = await pushShared("leaderboard", entry); } catch { /* local best remains saved */ } }
       resultsForm.hidden = false;
-      saveStatusNode.textContent = synced ? "Score saved to the shared leaderboard." : "Score saved on this device.";
+      if (synced) saveStatusNode.textContent = "New personal best saved to the shared leaderboard.";
+      else if (personalBest) saveStatusNode.textContent = "New personal best saved on this device.";
+      else saveStatusNode.textContent = "Your higher score is already saved on this device.";
       saveButton.textContent = "Saved";
     });
     startButton.addEventListener("click", () => { if (state === "over") reset(); setState("playing"); flap(); });
