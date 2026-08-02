@@ -407,7 +407,7 @@
     overlay.className = "party-game";
     overlay.hidden = true;
     overlay.setAttribute("aria-labelledby", "party-game-title");
-    overlay.innerHTML = `<div class="party-game-shell"><div class="party-game-header"><div><p class="party-game-eyebrow">PARTY MODE</p><h1 id="party-game-title">Flappy <em>Marisa.</em></h1><p class="party-game-copy">Help Marisa fly between the birthday memories. Tap, click or press Space to flap.</p></div><button class="party-game-close" type="button" data-party-close aria-label="Close party game"><i class="ph ph-x" aria-hidden="true"></i></button></div><div class="party-game-hud"><span>Score <strong data-party-score>0</strong></span><span>Best <strong data-party-best>0</strong></span></div><div class="party-game-board"><canvas width="800" height="500" data-party-canvas aria-label="Flappy Marisa birthday game"></canvas><div class="party-game-board-message" data-party-message>Ready when you are ✦</div></div><div class="party-game-actions"><button class="button button-coral" type="button" data-party-start>Start game</button><button class="button button-ghost" type="button" data-party-close>Back to weekend</button></div><p class="party-game-status" data-party-status>Fly through the photo gates without touching them.</p></div>`;
+    overlay.innerHTML = `<div class="party-game-shell"><div class="party-game-header"><div><p class="party-game-eyebrow">PARTY MODE</p><h1 id="party-game-title">Flappy <em>Marisa.</em></h1><p class="party-game-copy">Help Marisa fly between the birthday memories. Tap, click or press Space to flap.</p></div><button class="party-game-close" type="button" data-party-close aria-label="Close party game"><i class="ph ph-x" aria-hidden="true"></i></button></div><div class="party-game-hud"><span>Score <strong data-party-score>0</strong></span><span>Best <strong data-party-best>0</strong></span></div><div class="party-game-board"><canvas width="800" height="500" data-party-canvas aria-label="Flappy Marisa birthday game"></canvas><div class="party-game-board-message" data-party-message>Ready when you are ✦</div></div><div class="party-game-actions"><button class="button button-coral" type="button" data-party-start>Start game</button><button class="button button-outline" type="button" data-party-close>Back to weekend</button></div><p class="party-game-status" data-party-status>Fly through the photo gates without touching them.</p><div class="party-game-panels"><form class="party-game-results" data-party-results hidden><p class="party-game-panel-kicker">NICE FLIGHT</p><h2>Your score: <strong data-party-final-score>0</strong></h2><label for="party-player-name">Enter your name to save it</label><div class="party-game-score-row"><input id="party-player-name" data-party-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" required /><button class="button button-coral" type="submit">Save score</button></div><p class="party-game-save-status" data-party-save-status role="status" aria-live="polite"></p></form><section class="party-game-leaderboard" aria-labelledby="party-leaderboard-title"><p class="party-game-panel-kicker">THE HALL OF FAME</p><h2 id="party-leaderboard-title">Leaderboard</h2><ol data-party-leaderboard><li class="party-game-empty">Loading scores…</li></ol></section></div></div>`;
     document.body.appendChild(overlay);
     const canvas = $("[data-party-canvas]", overlay);
     const context = canvas.getContext("2d");
@@ -416,6 +416,11 @@
     const bestNode = $("[data-party-best]", overlay);
     const messageNode = $("[data-party-message]", overlay);
     const statusNode = $("[data-party-status]", overlay);
+    const resultsForm = $("[data-party-results]", overlay);
+    const finalScoreNode = $("[data-party-final-score]", overlay);
+    const nameInput = $("[data-party-name]", overlay);
+    const saveStatusNode = $("[data-party-save-status]", overlay);
+    const leaderboardNode = $("[data-party-leaderboard]", overlay);
     const sprite = new Image();
     sprite.src = "assets/game/marisa-sprite.jpg";
     const obstacleImages = partyObstaclePhotos.map((src) => { const image = new Image(); image.src = src; return image; });
@@ -429,7 +434,29 @@
     let frameId = 0;
     let lastFrame = 0;
     let photoIndex = 0;
+    let leaderboard = [];
+    let leaderboardRequest = null;
+    const leaderboardKey = "marisa-party-leaderboard";
     bestNode.textContent = best;
+    const sortLeaderboard = (entries) => {
+      const unique = [...new Map(entries.filter((entry) => entry && String(entry.name || "").trim() && Number.isFinite(Number(entry.score))).map((entry) => [entry.id || `${entry.name}-${entry.score}-${entry.createdAt}`, entry])).values()];
+      return unique.sort((a, b) => Number(b.score) - Number(a.score) || new Date(a.createdAt || 0) - new Date(b.createdAt || 0)).slice(0, 10);
+    };
+    const renderLeaderboard = () => {
+      leaderboardNode.innerHTML = leaderboard.length ? leaderboard.map((entry, index) => `<li><span class="leaderboard-rank">${String(index + 1).padStart(2, "0")}</span><span class="leaderboard-name">${escapeHtml(entry.name)}</span><strong>${Number(entry.score)}</strong></li>`).join("") : `<li class="party-game-empty">No scores yet — be the first.</li>`;
+    };
+    const loadLeaderboard = async () => {
+      if (leaderboardRequest) return leaderboardRequest;
+      const localEntries = read(leaderboardKey, []);
+      leaderboard = sortLeaderboard(localEntries);
+      renderLeaderboard();
+      if (!sharedBase) return;
+      leaderboardRequest = sharedFetch("leaderboard").then((payload) => {
+        leaderboard = sortLeaderboard([...sharedItems(payload), ...localEntries]);
+        renderLeaderboard();
+      }).catch(() => {}).finally(() => { leaderboardRequest = null; });
+      return leaderboardRequest;
+    };
     const roundedRect = (x, y, rectWidth, rectHeight, radius) => {
       context.beginPath();
       context.roundRect(x, y, rectWidth, rectHeight, radius);
@@ -475,17 +502,23 @@
       messageNode.hidden = nextState === "playing";
       startButton.hidden = nextState === "playing";
       startButton.textContent = nextState === "over" ? "Try again" : "Start game";
+      if (nextState !== "over") resultsForm.hidden = true;
       if (nextState === "ready") statusNode.textContent = "Fly through the photo gates without touching them.";
       if (nextState === "playing") statusNode.textContent = "Tap, click or press Space to flap.";
       if (nextState === "over") statusNode.textContent = `You scored ${score}. Give it another go for Marisa ✦`;
     };
     const reset = () => {
       gates.length = 0; score = 0; scoreNode.textContent = "0"; bird.y = 240; bird.velocity = 0; photoIndex = 0;
+      const saveButton = $("button[type=submit]", resultsForm);
+      nameInput.value = ""; saveButton.textContent = "Save score"; saveButton.disabled = false; saveStatusNode.textContent = "";
       for (let index = 0; index < 4; index += 1) gates.push({ x: 560 + index * 250, topHeight: 80 + Math.random() * 150, gap: 170, photo: index % obstacleImages.length, counted: false });
       setState("ready"); draw();
     };
     const endGame = () => {
       setState("over");
+      finalScoreNode.textContent = score;
+      saveStatusNode.textContent = "";
+      resultsForm.hidden = false;
       if (score > best) { best = score; bestNode.textContent = best; write("marisa-party-best", best); }
     };
     const flap = () => {
@@ -510,8 +543,26 @@
       if (state === "playing") update(elapsed / 16.67);
       draw(); frameId = window.requestAnimationFrame(loop);
     };
-    const show = () => { overlay.hidden = false; document.body.classList.add("is-party-game-open"); reset(); lastFrame = performance.now(); window.cancelAnimationFrame(frameId); frameId = window.requestAnimationFrame(loop); };
+    const show = () => { overlay.hidden = false; document.body.classList.add("is-party-game-open"); reset(); loadLeaderboard(); lastFrame = performance.now(); window.cancelAnimationFrame(frameId); frameId = window.requestAnimationFrame(loop); };
     const hide = () => { overlay.hidden = true; document.body.classList.remove("is-party-game-open"); window.cancelAnimationFrame(frameId); try { sessionStorage.setItem("marisa-birthday-access", "guest"); } catch { /* no-op */ } };
+    resultsForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const name = nameInput.value.trim().slice(0, 24);
+      if (!name) { saveStatusNode.textContent = "Add your name first."; nameInput.focus(); return; }
+      const entry = { id: `score-${Date.now()}-${Math.random().toString(16).slice(2)}`, name, score, createdAt: new Date().toISOString() };
+      const localEntries = read(leaderboardKey, []);
+      write(leaderboardKey, sortLeaderboard([...localEntries, entry]));
+      leaderboard = sortLeaderboard([...leaderboard, entry]);
+      renderLeaderboard();
+      const saveButton = $("button[type=submit]", resultsForm);
+      saveButton.disabled = true;
+      saveStatusNode.textContent = "Saving your score…";
+      let synced = false;
+      if (sharedBase) { try { synced = await pushShared("leaderboard", entry); } catch { /* local score remains saved */ } }
+      resultsForm.hidden = false;
+      saveStatusNode.textContent = synced ? "Score saved to the shared leaderboard." : "Score saved on this device.";
+      saveButton.textContent = "Saved";
+    });
     startButton.addEventListener("click", () => { if (state === "over") reset(); setState("playing"); flap(); });
     canvas.addEventListener("pointerdown", (event) => { event.preventDefault(); flap(); });
     document.addEventListener("keydown", (event) => { if (overlay.hidden) return; if (event.key === " " || event.key === "ArrowUp") { event.preventDefault(); flap(); } });
