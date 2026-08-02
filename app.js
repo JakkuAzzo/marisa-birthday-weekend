@@ -59,7 +59,7 @@
   let sharedMedia = [];
   let memoryPage = 0;
   const contributions = [
-    { id: "boat", title: "Boat hire", detail: "2 hours · Sunday before sunset", icon: "ph-sailboat", amount: () => config.contributionAmounts?.boat ?? 31 },
+    { id: "boat", title: "Boat hire", detail: "2 hours · Saturday before sunset", icon: "ph-sailboat", amount: () => config.contributionAmounts?.boat ?? 31 },
     { id: "cinema", title: "Vue cinema", detail: "Spider-Man: Brand New Day", icon: "ph-film-strip", amount: () => config.contributionAmounts?.cinema ?? 12 },
     { id: "stay", title: "Accommodation", detail: "3 nights · estimated 5 paying guests", icon: "ph-house-line", amount: () => config.contributionAmounts?.stay ?? 82.80 },
     { id: "gift", title: "Gift fund", detail: "Optional group gift for Marisa", icon: "ph-gift", amount: () => config.contributionAmounts?.gift ?? 15 }
@@ -199,11 +199,11 @@
     ["20260821T090000", "20260821T120000", "The Breakfast Club", "Marisa's birthday weekend"],
     ["20260821T140000", "20260821T170000", "Park picnic + drinks", "Indoor backup if raining"],
     ["20260821T190000", "20260821T230000", "Cake, food, gifts + games", "At the accommodation"],
-    ["20260822T110000", "20260822T150000", "Games + drinks", "At the accommodation"],
-    ["20260822T190000", "20260822T235900", "Arcade / club / girls' night", "Final activity based on the group vote"],
-    ["20260823T120000", "20260823T140000", "Pub or restaurant meet", "Details to be confirmed"],
-    ["20260823T150000", "20260823T170000", "Boat hire", "Two hours before sunset"],
-    ["20260823T180000", "20260823T210000", "Vue cinema: Spider-Man: Brand New Day", "Croydon"],
+    ["20260822T120000", "20260822T140000", "Pub or restaurant meet", "Kingston upon Thames"],
+    ["20260822T150000", "20260822T170000", "Boat hire", "Kingston upon Thames · two hours before sunset"],
+    ["20260823T110000", "20260823T150000", "Accommodation meet", "Games, drinks + getting ready"],
+    ["20260823T160000", "20260823T190000", "Vue cinema: Spider-Man: Brand New Day", "Vue Purley Way"],
+    ["20260823T200000", "20260823T235900", "Night out", "Location to be confirmed"],
     ["20260824T100000", "20260824T120000", "Slow morning + goodbyes", "Check-out day"]
   ];
   const makeIcs = () => {
@@ -558,6 +558,58 @@
   };
 
   const setupCalendar = () => $$('[data-calendar-action="download"]').forEach((button) => button.addEventListener("click", downloadCalendar));
+
+  const setupItineraryPopups = () => {
+    const cards = $$(".day-card");
+    if (!cards.length || $("[data-itinerary-modal]")) return;
+    const itineraries = [
+      { day: "Friday 21 August", label: "Main birthday day", date: "FRI · 21 AUG", items: [
+        { time: "09:00–12:00", title: "The Breakfast Club", location: "Here East, Queen Elizabeth Olympic Park, Hackney Wick", directions: "https://www.google.com/maps/search/?api=1&query=The+Breakfast+Club+Here+East+Hackney+Wick" },
+        { time: "14:00–17:00", title: "Park picnic + drinks", location: "Queen Elizabeth Olympic Park · indoor backup if raining", directions: "https://www.google.com/maps/search/?api=1&query=Queen+Elizabeth+Olympic+Park" },
+        { time: "19:00–23:00", title: "Cake, food, gifts + games", location: "At the accommodation · final address shared after booking" }
+      ] },
+      { day: "Saturday 22 August", label: "Kingston activity day", date: "SAT · 22 AUG", items: [
+        { time: "12:00–14:00", title: "Pub or restaurant meet", location: "Kingston upon Thames", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames" },
+        { time: "15:00–17:00", title: "Boat hire", location: "Kingston upon Thames riverfront · final meeting point to be confirmed", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames+riverfront" }
+      ] },
+      { day: "Sunday 23 August", label: "Cinema & nightlife day", date: "SUN · 23 AUG", items: [
+        { time: "11:00–15:00", title: "Accommodation meet", location: "Games, drinks + getting ready · final address shared after booking" },
+        { time: "16:00–19:00", title: "Vue cinema: Spider-Man: Brand New Day", location: "Vue Croydon Purley Way", directions: "https://www.google.com/maps/search/?api=1&query=Vue+Croydon+Purley+Way" },
+        { time: "20:00–23:59", title: "Night out", location: "Location to be confirmed", directions: "https://www.google.com/maps/search/?api=1&query=Purley+Way+Croydon+restaurants+bars" }
+      ] }
+    ];
+    const modal = document.createElement("div");
+    modal.className = "itinerary-modal";
+    modal.dataset.itineraryModal = "true";
+    modal.hidden = true;
+    modal.innerHTML = '<div class="itinerary-backdrop" data-itinerary-close></div><section class="itinerary-dialog" role="dialog" aria-modal="true" aria-labelledby="itinerary-title"><button class="itinerary-close" type="button" data-itinerary-close aria-label="Close itinerary"><i class="ph ph-x" aria-hidden="true"></i></button><p class="eyebrow coral" data-itinerary-date></p><h2 id="itinerary-title" data-itinerary-title></h2><p class="itinerary-lede" data-itinerary-lede></p><div class="itinerary-list" data-itinerary-list></div><p class="itinerary-note">Times are the working plan and may shift slightly with travel or final bookings.</p></section>';
+    document.body.append(modal);
+    const title = $("[data-itinerary-title]", modal);
+    const date = $("[data-itinerary-date]", modal);
+    const lede = $("[data-itinerary-lede]", modal);
+    const list = $("[data-itinerary-list]", modal);
+    const close = () => { modal.hidden = true; document.body.classList.remove("is-itinerary-open"); };
+    $$('[data-itinerary-close]', modal).forEach((node) => node.addEventListener("click", close));
+    document.addEventListener("keydown", (event) => { if (event.key === "Escape" && !modal.hidden) close(); });
+    cards.forEach((card, index) => {
+      const itinerary = itineraries[index];
+      if (!itinerary) return;
+      card.setAttribute("role", "button");
+      card.setAttribute("tabindex", "0");
+      card.setAttribute("aria-label", `Open itinerary for ${itinerary.day}`);
+      const open = () => {
+        date.textContent = itinerary.date;
+        title.textContent = itinerary.day;
+        lede.textContent = itinerary.label;
+        list.innerHTML = itinerary.items.map((item) => `<article class="itinerary-item"><time>${escapeHtml(item.time)}</time><div><h3>${escapeHtml(item.title)}</h3><p><i class="ph ph-map-pin" aria-hidden="true"></i>${escapeHtml(item.location)}</p>${item.directions ? `<a class="text-link" href="${item.directions}" target="_blank" rel="noopener noreferrer">Get directions <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a>` : ""}</div></article>`).join("");
+        modal.hidden = false;
+        document.body.classList.add("is-itinerary-open");
+        modal.querySelector(".itinerary-close")?.focus();
+      };
+      card.addEventListener("click", (event) => { if (!event.target.closest("a,button")) open(); });
+      card.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); open(); } });
+    });
+  };
   const setupNavHighlight = () => {
     const normalizePath = (value) => { const path = new URL(value, window.location.href).pathname; return path.endsWith("/") ? `${path}index.html` : path; };
     const path = normalizePath(window.location.href);
@@ -593,5 +645,5 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupNavHighlight(); setupSectionPosters(); setupImageLoading();
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading();
 })();

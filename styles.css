@@ -193,6 +193,25 @@ body.page-home main > #memories { display: none; }
 .plan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; max-width: 1320px; margin: 0 auto; }
 .day-card { display: grid; grid-template-columns: 66px 120px 1fr; gap: 16px; align-items: start; min-height: 190px; padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: rgba(255, 255, 255, .34); transition: transform .2s ease, box-shadow .2s ease; }
 .day-card:hover { transform: translateY(-5px); box-shadow: var(--shadow); }
+.day-card[role="button"] { cursor: pointer; }
+.day-card[role="button"]:focus-visible { outline: 3px solid var(--coral); outline-offset: 4px; }
+.is-itinerary-open { overflow: hidden; }
+.itinerary-modal { position: fixed; inset: 0; z-index: 30; display: grid; place-items: center; padding: 24px; }
+.itinerary-modal[hidden] { display: none; }
+.itinerary-backdrop { position: absolute; inset: 0; background: rgba(37, 16, 29, .72); backdrop-filter: blur(5px); }
+.itinerary-dialog { position: relative; width: min(650px, 100%); max-height: min(760px, calc(100vh - 48px)); overflow: auto; padding: 38px; border: 1px solid rgba(244, 234, 217, .35); border-radius: 10px; background: var(--paper); box-shadow: 0 22px 80px rgba(0, 0, 0, .28); }
+.itinerary-close { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 36px; height: 36px; border: 1px solid var(--line); border-radius: 50%; background: transparent; color: var(--aubergine); font-size: 19px; cursor: pointer; }
+.itinerary-close:focus-visible { outline: 3px solid var(--coral); outline-offset: 2px; }
+.itinerary-dialog h2 { max-width: 470px; margin-bottom: 8px; font-size: clamp(32px, 5vw, 48px); }
+.itinerary-lede { margin-bottom: 25px; color: var(--muted); }
+.itinerary-list { display: grid; gap: 10px; }
+.itinerary-item { display: grid; grid-template-columns: 105px 1fr; gap: 18px; padding: 16px 0; border-top: 1px solid var(--line); }
+.itinerary-item time { color: var(--coral-dark); font-size: 12px; font-weight: 700; }
+.itinerary-item h3 { margin-bottom: 5px; font-family: var(--display); font-size: 23px; font-weight: 400; }
+.itinerary-item p { display: flex; align-items: flex-start; gap: 6px; margin-bottom: 8px; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.itinerary-item p i { flex: 0 0 auto; color: var(--coral-dark); }
+.itinerary-item .text-link { font-size: 12px; }
+.itinerary-note { margin-top: 22px; color: var(--muted); font-size: 11px; }
 .day-date { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 104px; padding: 9px 4px; border-radius: 6px; background: var(--coral); color: var(--aubergine); line-height: 1; }
 .day-date span { font-size: 10px; font-weight: 700; letter-spacing: .12em; }
 .day-date strong { margin: 7px 0; font-family: var(--display); font-size: 33px; font-weight: 400; }
@@ -354,6 +373,10 @@ code { padding: 2px 4px; background: rgba(50, 20, 38, .08); }
   .marisa-view-photo { max-width: 420px; }
 }
 @media (max-width: 560px) {
+  .itinerary-modal { padding: 12px; }
+  .itinerary-dialog { max-height: calc(100vh - 24px); padding: 30px 20px 22px; }
+  .itinerary-item { grid-template-columns: 82px 1fr; gap: 11px; }
+  .itinerary-item h3 { font-size: 20px; }
   .brand-script { font-size: 24px; }
   h1 { font-size: 58px; }
   h1 em { white-space: normal; }
