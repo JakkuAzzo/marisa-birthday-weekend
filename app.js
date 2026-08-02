@@ -49,7 +49,8 @@
   const firstBirthdayMedia = {
     video: "assets/media/marisa-first-birthday.mp4",
     audio: "assets/media/marisa-first-birthday-song.m4a",
-    poster: "assets/photos/marisa-bouquet.jpeg"
+    poster: "assets/photos/marisa-bouquet.jpeg",
+    songStartSeconds: 114
   };
   const defaultAttendees = [
     { name: "Marisa", image: "assets/photos/marisa-roses.jpeg" },
@@ -163,7 +164,7 @@
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">YOUR BONUS TRACKS</p><h2>Press<br /><em>play.</em></h2><p>Voice notes sound better when they are meant just for you.</p></div><div class="wrapped-voice-list">${voiceCards}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-soundtrack" data-wrapped-slide="7">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-soundtrack-audio"><div class="wrapped-voice-icon"><i class="ph ph-music-notes" aria-hidden="true"></i></div><strong>Press play for the song</strong><span>The soundtrack from your first birthday replay.</span><audio controls preload="none" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio></div></div>
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-soundtrack-audio"><div class="wrapped-voice-icon"><i class="ph ph-music-notes" aria-hidden="true"></i></div><strong>Press play for the song</strong><span>The song starts at 1:54 and loops from there.</span><audio controls preload="none" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio></div></div>
         </article>
         <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="8">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN THREE ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
@@ -180,6 +181,20 @@
     const next = $(".wrapped-arrow-next", node);
     if (previous) previous.disabled = marisaWrappedSlide === 0;
     if (next) next.hidden = marisaWrappedSlide >= slides.length - 1;
+    const soundtrack = $("[data-first-birthday-song]", node);
+    if (soundtrack) {
+      const start = Number(soundtrack.dataset.songStart) || 114;
+      const jumpToSong = () => {
+        if (Number.isFinite(soundtrack.duration) && soundtrack.duration > start) soundtrack.currentTime = start;
+      };
+      soundtrack.addEventListener("loadedmetadata", jumpToSong, { once: true });
+      soundtrack.addEventListener("play", () => {
+        if (soundtrack.currentTime < start || soundtrack.currentTime >= soundtrack.duration) jumpToSong();
+      });
+      soundtrack.addEventListener("timeupdate", () => {
+        if (Number.isFinite(soundtrack.duration) && soundtrack.currentTime >= soundtrack.duration - 0.08) jumpToSong();
+      });
+    }
   };
 
   const setupMarisaWrapped = () => {
