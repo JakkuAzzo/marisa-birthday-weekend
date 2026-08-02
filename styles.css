@@ -37,6 +37,7 @@ button { cursor: pointer; }
 html.is-gated, html.is-gated body { background: var(--aubergine); overflow: hidden; }
 html.is-gated .site-shell { visibility: hidden; height: 100vh; overflow: hidden; }
 .site-shell { overflow: hidden; }
+main > section:not(:first-child) { content-visibility: auto; contain-intrinsic-size: 720px; }
 .section-dark { background: var(--aubergine); color: var(--cream); }
 .paper-section { background: var(--paper); }
 .section-photo-bg,
@@ -53,9 +54,9 @@ html.is-gated .site-shell { visibility: hidden; height: 100vh; overflow: hidden;
 .page-plan .plan-section > *,
 .page-rsvp .rsvp-section > *,
 .page-details .details-section > * { position: relative; z-index: 1; }
-.page-plan .plan-section { --section-photo: url('assets/photos/marisa-park-friend.jpeg'); }
-.page-rsvp .rsvp-section { --section-photo: url('assets/photos/family-shopping.jpeg'); }
-.page-details .details-section { --section-photo: url('assets/photos/marisa-hat.jpeg'); }
+.page-plan .plan-section { --section-photo: url('assets/photos/optimized/marisa-park-friend.webp'); }
+.page-rsvp .rsvp-section { --section-photo: url('assets/photos/optimized/family-shopping.webp'); }
+.page-details .details-section { --section-photo: url('assets/photos/optimized/marisa-hat.webp'); }
 .section-posters { position: absolute !important; z-index: 0 !important; inset: 0; overflow: hidden; pointer-events: none; }
 .poster-frame { position: absolute; display: block; width: clamp(116px, 13vw, 190px); padding: 9px 9px 28px; background: #f9f0e1; box-shadow: 0 15px 28px rgba(50, 20, 38, .14); opacity: .68; }
 .poster-frame img { width: 100%; aspect-ratio: .78; object-fit: cover; object-position: 50% 28%; filter: saturate(.78) contrast(.94); }

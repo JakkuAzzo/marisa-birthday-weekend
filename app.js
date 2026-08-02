@@ -2,18 +2,18 @@
   const config = window.MARISA_CONFIG || {};
   const storageKeys = { rsvps: "marisa-birthday-rsvps", notes: "marisa-birthday-notes", media: "marisa-birthday-media", payments: "marisa-birthday-payments" };
   const photos = [
-    { src: "assets/photos/marisa-roses.jpeg", caption: "The birthday girl", alt: "Marisa holding roses beside the water", tilt: "-2deg" },
-    { src: "assets/photos/marisa-water.jpeg", caption: "A little sunshine", alt: "Marisa smiling by the water", tilt: "2deg" },
-    { src: "assets/photos/family-flowers.jpeg", caption: "Flower wall energy", alt: "Marisa and a friend sitting in front of a flower wall", tilt: "-1deg" },
-    { src: "assets/photos/group-bus.jpeg", caption: "The travelling party", alt: "Friends taking a photo on a bus", tilt: "3deg" },
-    { src: "assets/photos/marisa-nafe-water.jpeg", caption: "Good company", alt: "Marisa and Nafe together by the water", tilt: "-3deg" },
-    { src: "assets/photos/family-shopping.jpeg", caption: "Family outing", alt: "Family and friends smiling together", tilt: "1deg" },
-    { src: "assets/photos/marisa-hat-bw.jpeg", caption: "Main character", alt: "Marisa posing in a hat", tilt: "-2deg" },
-    { src: "assets/photos/marisa-tree.jpeg", caption: "Outside, always", alt: "Marisa standing beneath a blossom tree", tilt: "2deg" },
-    { src: "assets/photos/marisa-flowers-close.jpeg", caption: "Birthday glow", alt: "Close-up portrait of Marisa with roses", tilt: "-1deg" },
-    { src: "assets/photos/friends-outdoors.jpeg", caption: "The best people", alt: "Marisa laughing with a friend outdoors", tilt: "2deg" },
-    { src: "assets/photos/family-table.jpeg", caption: "Together", alt: "Family and friends gathered at a table", tilt: "-2deg" },
-    { src: "assets/photos/couple-close.jpeg", caption: "Always a moment", alt: "A close-up photo of two people smiling", tilt: "1deg" }
+    { src: "assets/photos/optimized/marisa-roses.webp", caption: "The birthday girl", alt: "Marisa holding roses beside the water", tilt: "-2deg" },
+    { src: "assets/photos/optimized/marisa-water.webp", caption: "A little sunshine", alt: "Marisa smiling by the water", tilt: "2deg" },
+    { src: "assets/photos/optimized/family-flowers.webp", caption: "Flower wall energy", alt: "Marisa and a friend sitting in front of a flower wall", tilt: "-1deg" },
+    { src: "assets/photos/optimized/group-bus.webp", caption: "The travelling party", alt: "Friends taking a photo on a bus", tilt: "3deg" },
+    { src: "assets/photos/optimized/marisa-nafe-water.webp", caption: "Good company", alt: "Marisa and Nafe together by the water", tilt: "-3deg" },
+    { src: "assets/photos/optimized/family-shopping.webp", caption: "Family outing", alt: "Family and friends smiling together", tilt: "1deg" },
+    { src: "assets/photos/optimized/marisa-hat-bw.webp", caption: "Main character", alt: "Marisa posing in a hat", tilt: "-2deg" },
+    { src: "assets/photos/optimized/marisa-tree.webp", caption: "Outside, always", alt: "Marisa standing beneath a blossom tree", tilt: "2deg" },
+    { src: "assets/photos/optimized/marisa-flowers-close.webp", caption: "Birthday glow", alt: "Close-up portrait of Marisa with roses", tilt: "-1deg" },
+    { src: "assets/photos/optimized/friends-outdoors.webp", caption: "The best people", alt: "Marisa laughing with a friend outdoors", tilt: "2deg" },
+    { src: "assets/photos/optimized/family-table.webp", caption: "Together", alt: "Family and friends gathered at a table", tilt: "-2deg" },
+    { src: "assets/photos/optimized/couple-close.webp", caption: "Always a moment", alt: "A close-up photo of two people smiling", tilt: "1deg" }
   ];
   const archivePhotos = [
     ["marisa-nafe-food.jpeg", "Food and fuss", "Marisa and Nafe sharing a plate"],
@@ -49,16 +49,16 @@
   const firstBirthdayMedia = {
     video: "assets/media/marisa-first-birthday.mp4",
     audio: "assets/media/marisa-first-birthday-song.m4a",
-    poster: "assets/photos/marisa-bouquet.jpeg",
+    poster: "assets/photos/optimized/marisa-bouquet.webp",
     songStartSeconds: 144,
     songEndSeconds: 176
   };
   const defaultAttendees = [
-    { name: "Marisa", image: "assets/photos/marisa-roses.jpeg" },
-    { name: "Nafe", image: "assets/photos/marisa-nafe-water.jpeg" },
-    { name: "Alex", image: "assets/photos/group-bus.jpeg" },
-    { name: "Max", image: "assets/photos/boat-night.jpeg" },
-    { name: "Rosie", image: "assets/photos/friends-outdoors.jpeg" },
+    { name: "Marisa", image: "assets/photos/optimized/marisa-roses.webp" },
+    { name: "Nafe", image: "assets/photos/optimized/marisa-nafe-water.webp" },
+    { name: "Alex", image: "assets/photos/optimized/group-bus.webp" },
+    { name: "Max", image: "assets/photos/optimized/boat-night.webp" },
+    { name: "Rosie", image: "assets/photos/optimized/friends-outdoors.webp" },
     { name: "+12", more: true }
   ];
   let liveRsvps = [];
@@ -195,7 +195,7 @@
   const wrappedMediaCard = (item) => {
     const label = item.type === "video" ? "video" : item.type === "audio" ? "voice note" : "photo";
     let content = `<div class="wrapped-media-placeholder"><i class="ph ${item.type === "video" ? "ph-play-circle" : "ph-image"}" aria-hidden="true"></i></div>`;
-    if (item.url && item.type === "video") content = `<video controls preload="metadata" src="${escapeHtml(item.url)}" aria-label="Video shared by ${escapeHtml(item.name || "a friend")}"></video>`;
+    if (item.url && item.type === "video") content = `<video controls preload="none" src="${escapeHtml(item.url)}" aria-label="Video shared by ${escapeHtml(item.name || "a friend")}"></video>`;
     if (item.url && item.type === "image") content = `<img loading="lazy" decoding="async" src="${escapeHtml(item.url)}" alt="${escapeHtml(item.name || "A friend")} shared a birthday photo" />`;
     return `<figure class="wrapped-upload-card wrapped-upload-${label}" style="--tilt:${item.tilt || "0deg"}">${content}<figcaption><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.caption || label)}</span></figcaption></figure>`;
   };
@@ -219,7 +219,7 @@
     const itineraryCards = itinerary.map((day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`).join("");
     const wordCards = words.length ? words.map((item) => `<article class="wrapped-quote"><span class="wrapped-quote-mark">“</span><blockquote>${escapeHtml(item.text || "A little birthday love for you.")}</blockquote><footer><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.mood || "sent with love")}</span></footer></article>`).join("") : wrappedEmpty("No words yet", "Your people can still leave something for the memory wall.");
     const momentCards = moments.length ? moments.map(wrappedMediaCard).join("") : wrappedEmpty("No uploads yet", "Photos and videos will appear here as people add them.");
-    const voiceCards = voiceNotes.length ? voiceNotes.map((item) => `<article class="wrapped-voice-card"><div class="wrapped-voice-icon"><i class="ph ph-waveform" aria-hidden="true"></i></div><div><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.caption || "A voice note for Marisa")}</span>${item.url ? `<audio controls preload="metadata" src="${escapeHtml(item.url)}" aria-label="Voice note from ${escapeHtml(item.name || "a friend")}"></audio>` : ""}</div></article>`).join("") : wrappedEmpty("No voice notes yet", "Someone should definitely press record.");
+    const voiceCards = voiceNotes.length ? voiceNotes.map((item) => `<article class="wrapped-voice-card"><div class="wrapped-voice-icon"><i class="ph ph-waveform" aria-hidden="true"></i></div><div><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.caption || "A voice note for Marisa")}</span>${item.url ? `<audio controls preload="none" src="${escapeHtml(item.url)}" aria-label="Voice note from ${escapeHtml(item.name || "a friend")}"></audio>` : ""}</div></article>`).join("") : wrappedEmpty("No voice notes yet", "Someone should definitely press record.");
     const slideCount = 10;
 
     node.innerHTML = `<div class="wrapped-progress" style="--wrapped-count:${slideCount}" aria-label="Wrapped progress">${Array.from({ length: slideCount }, (_, index) => `<span data-wrapped-progress="${index}"></span>`).join("")}</div>
@@ -227,7 +227,7 @@
       <div class="wrapped-stage">
         <article class="wrapped-slide wrapped-slide-cover" data-wrapped-slide="0">
           <div class="wrapped-cover-copy"><p class="wrapped-kicker">YOUR 2026 BIRTHDAY STORY</p><h1>Marisa<br /><em>Wrapped.</em></h1><p class="wrapped-subtitle">A little replay of the people, words and moments that make you so loved.</p><button class="wrapped-start" type="button" data-wrapped-next>Tap to begin <i class="ph ph-arrow-right" aria-hidden="true"></i></button></div>
-          <div class="wrapped-cover-art"><div class="wrapped-orbit wrapped-orbit-one"></div><div class="wrapped-orbit wrapped-orbit-two"></div><figure><img src="assets/photos/marisa-bouquet.jpeg" alt="Marisa holding a bouquet beside the water" /></figure><span class="wrapped-sticker">21<br /><small>AUG</small></span></div>
+          <div class="wrapped-cover-art"><div class="wrapped-orbit wrapped-orbit-one"></div><div class="wrapped-orbit wrapped-orbit-two"></div><figure><img src="assets/photos/optimized/marisa-bouquet.webp" alt="Marisa holding a bouquet beside the water" /></figure><span class="wrapped-sticker">21<br /><small>AUG</small></span></div>
         </article>
         <article class="wrapped-slide wrapped-slide-people" data-wrapped-slide="1">
           <div><p class="wrapped-kicker">THE PEOPLE EDIT</p><h2>You had<br /><em>your people.</em></h2><p class="wrapped-number">${rsvps.length}</p><p class="wrapped-stat">${rsvps.length === 1 ? "person has" : "people have"} confirmed so far — and the weekend is still being written.</p></div>
@@ -249,7 +249,7 @@
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">YOUR BONUS TRACKS</p><h2>Press<br /><em>play.</em></h2><p>Voice notes sound better when they are meant just for you.</p></div><div class="wrapped-voice-list">${voiceCards}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-soundtrack" data-wrapped-slide="7">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-soundtrack-audio"><div class="wrapped-voice-icon"><i class="ph ph-music-notes" aria-hidden="true"></i></div><strong>Press play for the song</strong><span>Plays from 2:24 to 2:56, then loops.</span><audio controls preload="none" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" data-song-end="${firstBirthdayMedia.songEndSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio></div></div>
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="none" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-soundtrack-audio"><div class="wrapped-voice-icon"><i class="ph ph-music-notes" aria-hidden="true"></i></div><strong>Press play for the song</strong><span>Plays from 2:24 to 2:56, then loops.</span><audio controls preload="none" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" data-song-end="${firstBirthdayMedia.songEndSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio></div></div>
         </article>
         <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="8">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN TWO ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
@@ -283,7 +283,6 @@
       if (event.key === "ArrowRight" || event.key === " ") { event.preventDefault(); marisaWrappedSlide += 1; renderMarisaWrapped(); }
       if (event.key === "ArrowLeft") { event.preventDefault(); marisaWrappedSlide -= 1; renderMarisaWrapped(); }
     });
-    renderMarisaWrapped();
   };
 
   let toastTimer;
@@ -382,7 +381,7 @@
       ...notes.map((note) => `<figure class="memory-card is-note" style="--tilt:${note.tilt || "0deg"}"><blockquote>“${escapeHtml(note.body)}”</blockquote><figcaption><strong>${escapeHtml(note.name)}</strong>${escapeHtml(note.mood)}</figcaption></figure>`),
       ...media.map((item) => {
         if (item.type === "message") return `<figure class="memory-card is-note" style="--tilt:${item.tilt || "0deg"}"><blockquote>“${escapeHtml(item.caption)}”</blockquote><figcaption><strong>${escapeHtml(item.name)}</strong>shared message</figcaption></figure>`;
-        const content = item.type === "video" ? `<video controls preload="metadata" src="${item.url}" aria-label="Video shared by ${escapeHtml(item.name)}"></video>` : item.type === "audio" ? `<audio controls preload="metadata" src="${item.url}" aria-label="Voice note shared by ${escapeHtml(item.name)}"></audio>` : `<img loading="lazy" decoding="async" src="${item.url}" alt="${escapeHtml(item.name)}'s uploaded memory" />`;
+        const content = item.type === "video" ? `<video controls preload="none" src="${item.url}" aria-label="Video shared by ${escapeHtml(item.name)}"></video>` : item.type === "audio" ? `<audio controls preload="none" src="${item.url}" aria-label="Voice note shared by ${escapeHtml(item.name)}"></audio>` : `<img loading="lazy" decoding="async" src="${item.url}" alt="${escapeHtml(item.name)}'s uploaded memory" />`;
         return `<figure class="memory-card ${item.type === "video" ? "is-video" : ""} ${item.type === "audio" ? "is-audio" : ""}" style="--tilt:${item.tilt || "1deg"}">${content}<figcaption><strong>${escapeHtml(item.name)}</strong>${escapeHtml(item.caption || (item.type === "audio" ? "voice note" : "shared memory"))}</figcaption></figure>`;
       })
     ];
@@ -833,7 +832,8 @@
   const setupSectionPosters = () => {
     const posterSets = [[1, 6, 10], [3, 8, 14], [5, 11, 18], [7, 13, 22]];
     if (!$("main")) return;
-    $$('main > section').forEach((section, sectionIndex) => {
+    const sections = $$('main > section');
+    const addPosters = (section, sectionIndex) => {
       if (section.querySelector(".section-posters")) return;
       const selected = posterSets[sectionIndex % posterSets.length];
       section.dataset.posterLayout = String(sectionIndex % 3);
@@ -842,7 +842,15 @@
         return `<span class="poster-frame poster-frame-${posterIndex + 1}"><img src="${photo.src}" alt="" loading="lazy" decoding="async" /></span>`;
       }).join("");
       section.insertAdjacentHTML("afterbegin", `<div class="section-posters" aria-hidden="true">${posters}</div>`);
-    });
+      if (typeof setupImageLoading === "function") setupImageLoading();
+    };
+    if (!("IntersectionObserver" in window)) { sections.forEach(addPosters); return; }
+    const observer = new IntersectionObserver((entries, currentObserver) => entries.forEach((entry) => {
+      if (!entry.isIntersecting) return;
+      addPosters(entry.target, Number(entry.target.dataset.posterIndex));
+      currentObserver.unobserve(entry.target);
+    }), { rootMargin: "1200px 0px" });
+    sections.forEach((section, index) => { section.dataset.posterIndex = String(index); observer.observe(section); });
   };
 
   const setupImageLoading = () => {
