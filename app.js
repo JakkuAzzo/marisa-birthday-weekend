@@ -545,6 +545,7 @@
     };
     const show = () => { overlay.hidden = false; document.body.classList.add("is-party-game-open"); reset(); loadLeaderboard(); lastFrame = performance.now(); window.cancelAnimationFrame(frameId); frameId = window.requestAnimationFrame(loop); };
     const hide = () => { overlay.hidden = true; document.body.classList.remove("is-party-game-open"); window.cancelAnimationFrame(frameId); try { sessionStorage.setItem("marisa-birthday-access", "guest"); } catch { /* no-op */ } };
+    overlay.addEventListener("dblclick", (event) => event.preventDefault(), { passive: false });
     resultsForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       const name = nameInput.value.trim().slice(0, 24);
@@ -707,6 +708,7 @@
     let recordingStartedAt = 0;
     let timerId = null;
     const status = $("[data-memory-status]");
+    const maxVideoSeconds = 30;
     const setStatus = (message) => { if (status) status.textContent = message; };
     const formatDuration = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
     const fileKind = (file) => {
@@ -716,6 +718,15 @@
       if (file.type.startsWith("audio/") || /\.(mp3|m4a|wav|ogg|webm)$/i.test(name)) return "audio";
       return "";
     };
+    const getVideoDuration = (file) => new Promise((resolve) => {
+      const sourceUrl = URL.createObjectURL(file);
+      const video = document.createElement("video");
+      video.preload = "metadata";
+      const finish = (duration) => { URL.revokeObjectURL(sourceUrl); resolve(duration); };
+      video.addEventListener("loadedmetadata", () => finish(video.duration), { once: true });
+      video.addEventListener("error", () => finish(null), { once: true });
+      video.src = sourceUrl;
+    });
     const renderPreview = () => {
       if (!preview) return;
       preview.hidden = !attachments.length;
@@ -728,13 +739,26 @@
         return `<article class="memory-preview-card" data-preview-id="${attachment.id}"><div class="memory-preview-media">${media}</div><div class="memory-preview-footer"><span>${attachment.kind} · ${escapeHtml(attachment.file.name)}</span><button class="memory-preview-remove" type="button" data-remove-attachment="${attachment.id}" aria-label="Remove ${escapeHtml(attachment.file.name)}"><i class="ph ph-x" aria-hidden="true"></i></button></div></article>`;
       }).join("");
     };
-    const addFiles = (files) => {
-      const accepted = Array.from(files).filter((file) => fileKind(file));
-      accepted.forEach((file) => attachments.push({ id: `attachment-${Date.now()}-${Math.random().toString(16).slice(2)}`, file, kind: fileKind(file), previewUrl: URL.createObjectURL(file) }));
+    const addFiles = async (files) => {
+      const candidates = Array.from(files);
+      const accepted = [];
+      let rejectedVideo = false;
+      for (const file of candidates) {
+        const kind = fileKind(file);
+        if (!kind) continue;
+        if (kind === "video") {
+          setStatus("Checking video length…");
+          const duration = await getVideoDuration(file);
+          if (Number.isFinite(duration) && duration > maxVideoSeconds) { rejectedVideo = true; continue; }
+        }
+        accepted.push({ file, kind });
+      }
+      accepted.forEach(({ file, kind }) => attachments.push({ id: `attachment-${Date.now()}-${Math.random().toString(16).slice(2)}`, file, kind, previewUrl: URL.createObjectURL(file) }));
       input.value = "";
       renderPreview();
-      if (accepted.length) setStatus(`${attachments.length} item${attachments.length === 1 ? "" : "s"} ready to submit.`);
-      if (accepted.length < files.length) setStatus("Only photos, videos and audio files can be added.");
+      if (rejectedVideo) setStatus(`Videos must be ${maxVideoSeconds} seconds or shorter. The longer video was not added.`);
+      else if (accepted.length) setStatus(`${attachments.length} item${attachments.length === 1 ? "" : "s"} ready to submit.`);
+      else if (candidates.length) setStatus("Only photos, videos and audio files can be added.");
     };
     const pickFiles = (accept, capture) => {
       input.accept = accept;
@@ -789,7 +813,7 @@
       for (const attachment of attachments) {
         setStatus(`Preparing ${attachment.kind} ${files.length + 1} of ${attachments.length}…`);
         const file = await compressImage(attachment.file);
-        if (file.size > 8 * 1024 * 1024) { setStatus(`${attachment.file.name} is over 8MB after compression — please choose a smaller file.`); return; }
+        if (file.size > 8 * 1024 * 1024) { setStatus(`${attachment.file.name} is over the 8MB storage limit — please choose ${attachment.kind === "video" ? "a shorter or lower-resolution clip" : "a smaller file"}.`); return; }
         files.push({ ...attachment, file });
       }
       const existing = read(storageKeys.media, []);

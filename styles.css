@@ -81,7 +81,7 @@ main > section:not(:first-child) { content-visibility: auto; contain-intrinsic-s
 .gate-footnote { margin: 28px 0 0; color: rgba(244, 234, 217, .48); font-size: 11px; }
 .party-game[hidden] { display: none; }
 body.is-party-game-open { overflow: hidden; }
-.party-game { position: fixed; z-index: 55; inset: 0; overflow: auto; background: #210d28; color: var(--cream); }
+.party-game { position: fixed; z-index: 55; inset: 0; overflow: auto; background: #210d28; color: var(--cream); touch-action: manipulation; overscroll-behavior: contain; -webkit-user-select: none; user-select: none; }
 .party-game-shell { width: min(980px, 100%); min-height: 100dvh; margin: 0 auto; padding: clamp(28px, 5vw, 62px) clamp(18px, 5vw, 60px) 38px; }
 .party-game-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
 .party-game-eyebrow { margin: 0 0 12px; color: var(--coral); font-size: 10px; font-weight: 700; letter-spacing: .25em; }
@@ -93,7 +93,8 @@ body.is-party-game-open { overflow: hidden; }
 .party-game-hud { display: flex; gap: 24px; margin: 28px 0 10px; color: rgba(244, 234, 217, .65); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 .party-game-hud strong { margin-left: 5px; color: var(--coral); font-family: var(--display); font-size: 28px; letter-spacing: 0; }
 .party-game-board { position: relative; overflow: hidden; border: 8px solid var(--cream); box-shadow: 12px 14px 0 rgba(237, 121, 93, .55), 0 18px 42px rgba(0, 0, 0, .3); transform: rotate(-1deg); }
-.party-game-board canvas { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; cursor: pointer; touch-action: none; }
+.party-game-board, .party-game-board canvas { touch-action: none; }
+.party-game-board canvas { display: block; width: 100%; height: auto; aspect-ratio: 8 / 5; cursor: pointer; }
 .party-game-board-message { position: absolute; top: 50%; left: 50%; padding: 12px 18px; border: 1px solid rgba(244, 234, 217, .35); border-radius: 999px; background: rgba(33, 13, 40, .72); color: var(--cream); font-family: var(--script); font-size: 23px; transform: translate(-50%, -50%); pointer-events: none; }
 .party-game-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 28px; }
 .party-game-actions .button-outline { border-color: rgba(244, 234, 217, .35); }
