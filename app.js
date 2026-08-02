@@ -407,11 +407,12 @@
     overlay.className = "party-game";
     overlay.hidden = true;
     overlay.setAttribute("aria-labelledby", "party-game-title");
-    overlay.innerHTML = `<div class="party-game-shell"><div class="party-game-header"><div><p class="party-game-eyebrow">PARTY MODE</p><h1 id="party-game-title">Flappy <em>Marisa.</em></h1><p class="party-game-copy">Help Marisa fly between the birthday memories. Tap, click or press Space to flap.</p></div><button class="party-game-close" type="button" data-party-close aria-label="Close party game"><i class="ph ph-x" aria-hidden="true"></i></button></div><div class="party-game-hud"><span>Score <strong data-party-score>0</strong></span><span>Best <strong data-party-best>0</strong></span></div><div class="party-game-board"><canvas width="800" height="500" data-party-canvas aria-label="Flappy Marisa birthday game"></canvas><div class="party-game-board-message" data-party-message>Ready when you are ✦</div></div><div class="party-game-actions"><button class="button button-coral" type="button" data-party-start>Start game</button><button class="button button-outline" type="button" data-party-close>Back to weekend</button></div><p class="party-game-status" data-party-status>Fly through the photo gates without touching them.</p><div class="party-game-panels"><form class="party-game-results" data-party-results hidden><p class="party-game-panel-kicker">NICE FLIGHT</p><h2>Your score: <strong data-party-final-score>0</strong></h2><label for="party-player-name">Enter your name to save it</label><div class="party-game-score-row"><input id="party-player-name" data-party-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" required /><button class="button button-coral" type="submit">Save score</button></div><p class="party-game-save-status" data-party-save-status role="status" aria-live="polite"></p></form><section class="party-game-leaderboard" aria-labelledby="party-leaderboard-title"><p class="party-game-panel-kicker">THE HALL OF FAME</p><h2 id="party-leaderboard-title">Leaderboard</h2><ol data-party-leaderboard><li class="party-game-empty">Loading scores…</li></ol></section></div></div>`;
+    overlay.innerHTML = `<div class="party-game-shell"><div class="party-game-header"><div><p class="party-game-eyebrow">PARTY MODE</p><h1 id="party-game-title">Flappy <em>Marisa.</em></h1><p class="party-game-copy">Help Marisa fly between the birthday memories. Tap, click or press Space to flap.</p></div><div class="party-game-header-actions"><button class="party-game-fullscreen" type="button" data-party-fullscreen aria-label="Open full screen" title="Open full screen"><i class="ph ph-arrows-out" aria-hidden="true"></i></button><button class="party-game-close" type="button" data-party-close aria-label="Close party game"><i class="ph ph-x" aria-hidden="true"></i></button></div></div><div class="party-game-hud"><span>Score <strong data-party-score>0</strong></span><span>Best <strong data-party-best>0</strong></span></div><div class="party-game-board"><canvas width="800" height="500" data-party-canvas aria-label="Flappy Marisa birthday game"></canvas><div class="party-game-board-message" data-party-message>Ready when you are ✦</div></div><div class="party-game-actions"><button class="button button-coral" type="button" data-party-start>Start game</button><button class="button button-outline" type="button" data-party-close>Back to weekend</button></div><p class="party-game-status" data-party-status>Fly through the photo gates without touching them.</p><div class="party-game-panels"><form class="party-game-results" data-party-results hidden><p class="party-game-panel-kicker">NICE FLIGHT</p><h2>Your score: <strong data-party-final-score>0</strong></h2><label for="party-player-name">Enter your name to save it</label><div class="party-game-score-row"><input id="party-player-name" data-party-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" required /><button class="button button-coral" type="submit">Save score</button></div><p class="party-game-save-status" data-party-save-status role="status" aria-live="polite"></p></form><section class="party-game-leaderboard" aria-labelledby="party-leaderboard-title"><p class="party-game-panel-kicker">THE HALL OF FAME</p><h2 id="party-leaderboard-title">Leaderboard</h2><ol data-party-leaderboard><li class="party-game-empty">Loading scores…</li></ol></section></div></div>`;
     document.body.appendChild(overlay);
     const canvas = $("[data-party-canvas]", overlay);
     const context = canvas.getContext("2d");
     const startButton = $("[data-party-start]", overlay);
+    const fullscreenButton = $("[data-party-fullscreen]", overlay);
     const scoreNode = $("[data-party-score]", overlay);
     const bestNode = $("[data-party-best]", overlay);
     const messageNode = $("[data-party-message]", overlay);
@@ -543,8 +544,32 @@
       if (state === "playing") update(elapsed / 16.67);
       draw(); frameId = window.requestAnimationFrame(loop);
     };
-    const show = () => { overlay.hidden = false; document.body.classList.add("is-party-game-open"); reset(); loadLeaderboard(); lastFrame = performance.now(); window.cancelAnimationFrame(frameId); frameId = window.requestAnimationFrame(loop); };
-    const hide = () => { overlay.hidden = true; document.body.classList.remove("is-party-game-open"); window.cancelAnimationFrame(frameId); try { sessionStorage.setItem("marisa-birthday-access", "guest"); } catch { /* no-op */ } };
+    const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+    const updateFullscreenButton = () => {
+      const active = fullscreenElement() === overlay;
+      fullscreenButton.innerHTML = `<i class="ph ${active ? "ph-arrows-in" : "ph-arrows-out"}" aria-hidden="true"></i>`;
+      fullscreenButton.setAttribute("aria-label", active ? "Exit full screen" : "Open full screen");
+      fullscreenButton.title = active ? "Exit full screen" : "Open full screen";
+    };
+    const toggleFullscreen = async () => {
+      try {
+        if (fullscreenElement()) {
+          if (document.exitFullscreen) await document.exitFullscreen();
+          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        } else if (overlay.requestFullscreen) {
+          await overlay.requestFullscreen();
+        } else if (overlay.webkitRequestFullscreen) {
+          overlay.webkitRequestFullscreen();
+        } else {
+          statusNode.textContent = "Full screen is not supported in this browser.";
+        }
+      } catch {
+        statusNode.textContent = "Full screen could not be opened here.";
+      }
+      updateFullscreenButton();
+    };
+    const show = () => { overlay.hidden = false; document.body.classList.add("is-party-game-open"); updateFullscreenButton(); reset(); loadLeaderboard(); lastFrame = performance.now(); window.cancelAnimationFrame(frameId); frameId = window.requestAnimationFrame(loop); };
+    const hide = () => { if (fullscreenElement() === overlay) { document.exitFullscreen?.(); document.webkitExitFullscreen?.(); } overlay.hidden = true; document.body.classList.remove("is-party-game-open"); window.cancelAnimationFrame(frameId); try { sessionStorage.setItem("marisa-birthday-access", "guest"); } catch { /* no-op */ } };
     overlay.addEventListener("dblclick", (event) => event.preventDefault(), { passive: false });
     resultsForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -565,8 +590,11 @@
       saveButton.textContent = "Saved";
     });
     startButton.addEventListener("click", () => { if (state === "over") reset(); setState("playing"); flap(); });
+    fullscreenButton.addEventListener("click", toggleFullscreen);
     canvas.addEventListener("pointerdown", (event) => { event.preventDefault(); flap(); });
-    document.addEventListener("keydown", (event) => { if (overlay.hidden) return; if (event.key === " " || event.key === "ArrowUp") { event.preventDefault(); flap(); } });
+    document.addEventListener("fullscreenchange", updateFullscreenButton);
+    document.addEventListener("webkitfullscreenchange", updateFullscreenButton);
+    document.addEventListener("keydown", (event) => { if (overlay.hidden) return; if (event.key === "Escape" && fullscreenElement() === overlay) { document.exitFullscreen?.(); document.webkitExitFullscreen?.(); return; } if (event.key === " " || event.key === "ArrowUp") { event.preventDefault(); flap(); } });
     $$('[data-party-close]', overlay).forEach((button) => button.addEventListener("click", hide));
     partyGame = { show, hide };
   };

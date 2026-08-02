@@ -82,14 +82,16 @@ main > section:not(:first-child) { content-visibility: auto; contain-intrinsic-s
 .party-game[hidden] { display: none; }
 body.is-party-game-open { overflow: hidden; }
 .party-game { position: fixed; z-index: 55; inset: 0; overflow: auto; background: #210d28; color: var(--cream); touch-action: manipulation; overscroll-behavior: contain; -webkit-user-select: none; user-select: none; }
+.party-game:fullscreen { width: 100%; height: 100%; }
 .party-game-shell { width: min(980px, 100%); min-height: 100dvh; margin: 0 auto; padding: clamp(28px, 5vw, 62px) clamp(18px, 5vw, 60px) 38px; }
 .party-game-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
+.party-game-header-actions { display: flex; flex: 0 0 auto; align-items: center; gap: 8px; }
 .party-game-eyebrow { margin: 0 0 12px; color: var(--coral); font-size: 10px; font-weight: 700; letter-spacing: .25em; }
 .party-game-header h1 { margin-bottom: 12px; color: var(--cream); font-size: clamp(54px, 8vw, 92px); line-height: .9; }
 .party-game-header h1 em { color: var(--coral); }
 .party-game-copy { max-width: 520px; margin: 0; color: rgba(244, 234, 217, .68); font-size: 15px; line-height: 1.45; }
-.party-game-close { display: grid; flex: 0 0 auto; place-items: center; width: 44px; height: 44px; border: 1px solid rgba(244, 234, 217, .3); border-radius: 50%; background: transparent; color: var(--cream); font-size: 20px; }
-.party-game-close:hover, .party-game-close:focus-visible { border-color: var(--coral); color: var(--coral); }
+.party-game-close, .party-game-fullscreen { display: grid; place-items: center; width: 44px; height: 44px; border: 1px solid rgba(244, 234, 217, .3); border-radius: 50%; background: transparent; color: var(--cream); font-size: 20px; }
+.party-game-close:hover, .party-game-close:focus-visible, .party-game-fullscreen:hover, .party-game-fullscreen:focus-visible { border-color: var(--coral); color: var(--coral); }
 .party-game-hud { display: flex; gap: 24px; margin: 28px 0 10px; color: rgba(244, 234, 217, .65); font-size: 11px; letter-spacing: .12em; text-transform: uppercase; }
 .party-game-hud strong { margin-left: 5px; color: var(--coral); font-family: var(--display); font-size: 28px; letter-spacing: 0; }
 .party-game-board { position: relative; overflow: hidden; border: 8px solid var(--cream); box-shadow: 12px 14px 0 rgba(237, 121, 93, .55), 0 18px 42px rgba(0, 0, 0, .3); transform: rotate(-1deg); }
