@@ -129,7 +129,7 @@
     const archiveChapterTwo = archivePhotos.slice(6, 12);
     const itinerary = [
       { date: "FRI · 21 AUG", label: "Main birthday day", items: [["09:00", "The Breakfast Club", "Here East, Queen Elizabeth Olympic Park, Hackney Wick"], ["14:00", "Park picnic + drinks", "Queen Elizabeth Olympic Park · indoor backup if raining"], ["19:00", "Cake, food, gifts + games", "Sutton"]] },
-      { date: "SAT · 22 AUG", label: "Kingston activity day", items: [["12:00", "Pub or restaurant meet", "Kingston upon Thames"], ["15:00", "Boat hire", "Kingston upon Thames riverfront · final meeting point to be confirmed"]] },
+      { date: "SAT · 22 AUG", label: "Kingston activity day", items: [["12:00", "Pub or restaurant meet", "Kingston upon Thames"], ["15:00", "Boat hire", "GoBoat Kingston · Riverside Walk, beside Kingston Bridge"]] },
       { date: "SUN · 23 AUG", label: "Cinema & nightlife day", items: [["11:00", "Sutton meet", "Sutton · games, drinks + getting ready"], ["16:00", "Vue cinema: Spider-Man: Brand New Day", "Vue Croydon Purley Way"], ["20:00", "Night out", "Location to be confirmed"]] }
     ];
     const itineraryCards = itinerary.map((day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`).join("");
@@ -316,7 +316,7 @@
     ["20260821T140000", "20260821T170000", "Park picnic + drinks", "Indoor backup if raining"],
     ["20260821T190000", "20260821T230000", "Cake, food, gifts + games", "Sutton"],
     ["20260822T120000", "20260822T140000", "Pub or restaurant meet", "Kingston upon Thames"],
-    ["20260822T150000", "20260822T170000", "Boat hire", "Kingston upon Thames · two hours before sunset"],
+    ["20260822T150000", "20260822T170000", "Boat hire", "GoBoat Kingston, Riverside Walk, Kingston upon Thames · two hours before sunset"],
     ["20260823T110000", "20260823T150000", "Sutton meet", "Sutton · games, drinks + getting ready"],
     ["20260823T160000", "20260823T190000", "Vue cinema: Spider-Man: Brand New Day", "Vue Purley Way"],
     ["20260823T200000", "20260823T235900", "Night out", "Location to be confirmed"],
@@ -690,7 +690,7 @@
       ] },
       { day: "Saturday 22 August", label: "Kingston activity day", date: "SAT · 22 AUG", items: [
         { time: "12:00–14:00", title: "Pub or restaurant meet", location: "Kingston upon Thames", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames" },
-        { time: "15:00–17:00", title: "Boat hire", location: "Kingston upon Thames riverfront · final meeting point to be confirmed", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames+riverfront" }
+        { time: "15:00–17:00", title: "Boat hire", location: "GoBoat Kingston · Riverside Walk, beside Kingston Bridge", directions: "https://maps.apple/p/axFrtHqf5sdT14" }
       ] },
       { day: "Sunday 23 August", label: "Cinema & nightlife day", date: "SUN · 23 AUG", items: [
         { time: "11:00–15:00", title: "Sutton meet", location: "Sutton · games, drinks + getting ready" },
