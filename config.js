@@ -10,7 +10,6 @@ window.MARISA_CONFIG = {
   SHARED_CALENDAR_URL: "",
   MONZO_PAYMENT_URL: "https://monzo.me/nathanbrownbennett?h=sWJ2zY&account_type=personal",
   contributionAmounts: {
-    urbanFun: 25,
     gift: 15
   }
 };
