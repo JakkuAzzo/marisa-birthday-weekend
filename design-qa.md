@@ -25,7 +25,7 @@ No actionable P0, P1 or P2 findings remain.
 ## Primary interactions tested
 
 - RSVP submission with a selected day: success state displayed and attendee count updated.
-- Shared-cost selection: boat hire updated the selected total to £31.00.
+- Shared-cost selection: the optional gift contribution updates the selected total.
 - Payment action with unconfigured links: safe configuration message displayed without attempting an external payment.
 - Note submission: success state displayed and a note card appeared on the memory wall.
 - Calendar download action: download handler ran and success toast displayed.

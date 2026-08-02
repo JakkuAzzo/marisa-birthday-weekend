@@ -76,6 +76,30 @@
   const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
   const money = (value) => `£${Number(value).toFixed(2)}`;
   const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char]));
+  const pauseBirthdaySoundtracks = () => $$('[data-first-birthday-song]').forEach((soundtrack) => { if (!soundtrack.paused) soundtrack.pause(); });
+  const setupBirthdaySoundtrack = (soundtrack, autoplay = false) => {
+    if (!soundtrack) return;
+    if (soundtrack.dataset.songReady) { if (autoplay) soundtrack.play().catch(() => {}); return; }
+    soundtrack.dataset.songReady = "true";
+    const start = Number(soundtrack.dataset.songStart) || 114;
+    const jumpToSong = () => {
+      if (Number.isFinite(soundtrack.duration) && soundtrack.duration <= start) return;
+      try { soundtrack.currentTime = start; } catch { /* metadata is still loading */ }
+    };
+    soundtrack.addEventListener("loadedmetadata", jumpToSong);
+    soundtrack.addEventListener("play", () => { if (soundtrack.currentTime < start || soundtrack.currentTime >= soundtrack.duration) jumpToSong(); });
+    soundtrack.addEventListener("timeupdate", () => { if (Number.isFinite(soundtrack.duration) && soundtrack.currentTime >= soundtrack.duration - 0.08) { jumpToSong(); soundtrack.play().catch(() => {}); } });
+    soundtrack.addEventListener("ended", () => { jumpToSong(); soundtrack.play().catch(() => {}); });
+    if (autoplay) soundtrack.play().catch(() => {});
+  };
+  const setupMediaFocus = () => {
+    if (document.documentElement.dataset.mediaFocusReady) return;
+    document.documentElement.dataset.mediaFocusReady = "true";
+    document.addEventListener("play", (event) => {
+      const media = event.target;
+      if (media instanceof HTMLMediaElement && !media.matches("[data-first-birthday-song]")) pauseBirthdaySoundtracks();
+    }, true);
+  };
   const sharedBase = config.FIREBASE_DATABASE_URL ? `${config.FIREBASE_DATABASE_URL.replace(/\/$/, "")}/birthday` : "";
   const sharedFetch = async (path, options = {}) => {
     if (!sharedBase) return null;
@@ -116,7 +140,7 @@
 
   const wrappedArchiveCard = (item) => `<figure class="wrapped-upload-card wrapped-archive-card" style="--tilt:${item.tilt || "0deg"}"><img loading="lazy" decoding="async" src="${escapeHtml(item.src)}" alt="${escapeHtml(item.alt)}" /><figcaption><strong>Marisa archive</strong><span>${escapeHtml(item.caption)}</span></figcaption></figure>`;
 
-  const renderMarisaWrapped = () => {
+  const renderMarisaWrapped = ({ autoplay = false } = {}) => {
     const node = $("[data-marisa-wrapped]");
     if (!node) return;
     const { rsvps, notes, media, uploads } = getWrappedData();
@@ -127,9 +151,8 @@
     const archiveChapterOne = archivePhotos.slice(0, 6);
     const archiveChapterTwo = archivePhotos.slice(6, 12);
     const itinerary = [
-      { date: "FRI · 21 AUG", label: "Main birthday day", items: [["09:00", "The Breakfast Club", "Here East, Queen Elizabeth Olympic Park, Hackney Wick"], ["14:00", "Park picnic + drinks", "Queen Elizabeth Olympic Park · indoor backup if raining"], ["19:00", "Cake, food, gifts + games", "Sutton"]] },
-      { date: "SAT · 22 AUG", label: "Kingston pub & night out", items: [["12:00", "Pub or restaurant meet", "Kingston upon Thames"], ["20:00", "Night out", "Location to be confirmed"]] },
-      { date: "SUN · 23 AUG", label: "Slow hotel day", items: [["11:00", "A completely free day", "Sutton · rest, films, food and time together"]] }
+      { date: "FRI · 21 AUG", label: "Main birthday day", items: [["09:00", "The Breakfast Club", "Here East, Queen Elizabeth Olympic Park, Hackney Wick"], ["12:00–13:30", "Park picnic + drinks", "Queen Elizabeth Olympic Park · indoor backup if raining"], ["14:00", "Travel to Sutton + hotel check-in", "Sutton"], ["19:00", "Cake, food, gifts + games", "Sutton"]] },
+      { date: "SAT · 22 AUG", label: "Kingston pub & night out", items: [["16:00", "Pub or restaurant meet", "Kingston upon Thames"], ["20:00", "Night out", "Location to be confirmed"]] }
     ];
     const itineraryCards = itinerary.map((day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`).join("");
     const wordCards = words.length ? words.map((item) => `<article class="wrapped-quote"><span class="wrapped-quote-mark">“</span><blockquote>${escapeHtml(item.text || "A little birthday love for you.")}</blockquote><footer><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.mood || "sent with love")}</span></footer></article>`).join("") : wrappedEmpty("No words yet", "Your people can still leave something for the memory wall.");
@@ -167,10 +190,10 @@
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-soundtrack-audio"><div class="wrapped-voice-icon"><i class="ph ph-music-notes" aria-hidden="true"></i></div><strong>Press play for the song</strong><span>The song starts at 1:54 and loops from there.</span><audio controls preload="none" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio></div></div>
         </article>
         <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="8">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN THREE ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN TWO ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-finale" data-wrapped-slide="9">
-          <div class="wrapped-finale-spark">✦</div><p class="wrapped-kicker">THAT'S A WRAP</p><h2>Happy birthday,<br /><em>Marisa.</em></h2><p>Three days, a hundred little moments, and a whole lot of love still to come.</p><div class="wrapped-finale-counts"><span><strong>${uploads.length}</strong> memories</span><span><strong>${rsvps.length}</strong> real responses</span></div><button class="wrapped-replay" type="button" data-wrapped-replay><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> Replay your Wrapped</button></article>
+          <div class="wrapped-finale-spark">✦</div><p class="wrapped-kicker">THAT'S A WRAP</p><h2>Happy birthday,<br /><em>Marisa.</em></h2><p>Two planned days, a hundred little moments, and a whole lot of love still to come.</p><div class="wrapped-finale-counts"><span><strong>${uploads.length}</strong> memories</span><span><strong>${rsvps.length}</strong> real responses</span></div><button class="wrapped-replay" type="button" data-wrapped-replay><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> Replay your Wrapped</button></article>
       </div><button class="wrapped-arrow wrapped-arrow-prev" type="button" data-wrapped-prev aria-label="Previous Wrapped slide"><i class="ph ph-arrow-left" aria-hidden="true"></i></button><button class="wrapped-arrow wrapped-arrow-next" type="button" data-wrapped-next aria-label="Next Wrapped slide"><i class="ph ph-arrow-right" aria-hidden="true"></i></button>`;
     node.closest(".wrapped-experience")?.scrollTo(0, 0);
     const slides = $$("[data-wrapped-slide]", node);
@@ -181,20 +204,7 @@
     const next = $(".wrapped-arrow-next", node);
     if (previous) previous.disabled = marisaWrappedSlide === 0;
     if (next) next.hidden = marisaWrappedSlide >= slides.length - 1;
-    const soundtrack = $("[data-first-birthday-song]", node);
-    if (soundtrack) {
-      const start = Number(soundtrack.dataset.songStart) || 114;
-      const jumpToSong = () => {
-        if (Number.isFinite(soundtrack.duration) && soundtrack.duration > start) soundtrack.currentTime = start;
-      };
-      soundtrack.addEventListener("loadedmetadata", jumpToSong, { once: true });
-      soundtrack.addEventListener("play", () => {
-        if (soundtrack.currentTime < start || soundtrack.currentTime >= soundtrack.duration) jumpToSong();
-      });
-      soundtrack.addEventListener("timeupdate", () => {
-        if (Number.isFinite(soundtrack.duration) && soundtrack.currentTime >= soundtrack.duration - 0.08) jumpToSong();
-      });
-    }
+    setupBirthdaySoundtrack($("[data-first-birthday-song]", node), autoplay);
   };
 
   const setupMarisaWrapped = () => {
@@ -326,12 +336,11 @@
 
   const calendarEvents = [
     ["20260821T090000", "20260821T120000", "The Breakfast Club", "Marisa's birthday weekend"],
-    ["20260821T140000", "20260821T170000", "Park picnic + drinks", "Indoor backup if raining"],
+    ["20260821T120000", "20260821T133000", "Park picnic + drinks", "Queen Elizabeth Olympic Park · indoor backup if raining"],
+    ["20260821T140000", "20260821T150000", "Travel to Sutton + hotel check-in", "Allow time to travel from the park and check in"],
     ["20260821T190000", "20260821T230000", "Cake, food, gifts + games", "Sutton"],
-    ["20260822T120000", "20260822T140000", "Pub or restaurant meet", "Kingston upon Thames"],
+    ["20260822T160000", "20260822T180000", "Pub or restaurant meet", "Kingston upon Thames"],
     ["20260822T200000", "20260822T235900", "Night out", "Kingston upon Thames · location to be confirmed"],
-    ["20260823T110000", "20260823T230000", "A completely free day", "Sutton · rest, films, food and time together"],
-    ["20260823T200000", "20260823T235900", "Night out", "Location to be confirmed"],
     ["20260824T100000", "20260824T120000", "Slow morning + goodbyes", "Check-out day"]
   ];
   const makeIcs = () => {
@@ -416,7 +425,9 @@
       marisaWrappedMode = true;
       document.body.classList.add("is-marisa-mode");
       marisaView.hidden = false;
-      renderMarisaWrapped();
+      renderMarisaWrapped({ autoplay: true });
+    } else {
+      setupBirthdaySoundtrack($("[data-first-birthday-song]"), true);
     }
   };
 
@@ -558,6 +569,7 @@
     recordButton?.addEventListener("click", async () => {
       if (recorder?.state === "recording") { recorder.stop(); return; }
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { setStatus("Voice recording is not supported in this browser. You can upload an audio file instead."); return; }
+      pauseBirthdaySoundtracks();
       try {
         recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const chunks = [];
@@ -697,16 +709,14 @@
     const itineraries = [
       { day: "Friday 21 August", label: "Main birthday day", date: "FRI · 21 AUG", items: [
         { time: "09:00–12:00", title: "The Breakfast Club", location: "Here East, Queen Elizabeth Olympic Park, Hackney Wick", directions: "https://www.google.com/maps/search/?api=1&query=The+Breakfast+Club+Here+East+Hackney+Wick" },
-        { time: "14:00–17:00", title: "Park picnic + drinks", location: "Queen Elizabeth Olympic Park · indoor backup if raining", directions: "https://www.google.com/maps/search/?api=1&query=Queen+Elizabeth+Olympic+Park" },
+        { time: "12:00–13:30", title: "Park picnic + drinks", location: "Queen Elizabeth Olympic Park · indoor backup if raining", directions: "https://www.google.com/maps/search/?api=1&query=Queen+Elizabeth+Olympic+Park" },
+        { time: "14:00–15:00", title: "Travel to Sutton + hotel check-in", location: "Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+London" },
         { time: "19:00–23:00", title: "Cake, food, gifts + games", location: "Sutton" }
       ] },
       { day: "Saturday 22 August", label: "Kingston pub & night out", date: "SAT · 22 AUG", items: [
-        { time: "12:00–14:00", title: "Pub or restaurant meet", location: "Kingston upon Thames", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames" },
+        { time: "16:00–18:00", title: "Pub or restaurant meet", location: "Kingston upon Thames", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames" },
         { time: "20:00–23:59", title: "Night out", location: "Kingston upon Thames · location to be confirmed", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames+restaurants+bars" }
       ] },
-      { day: "Sunday 23 August", label: "Slow hotel day", date: "SUN · 23 AUG", items: [
-        { time: "11:00–23:00", title: "A completely free day", location: "Sutton · rest, films, food and time together" }
-      ] }
     ];
     const modal = document.createElement("div");
     modal.className = "itinerary-modal";
@@ -785,5 +795,5 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading();
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading(); setupMediaFocus(); setupBirthdaySoundtrack($("[data-first-birthday-song]"));
 })();
