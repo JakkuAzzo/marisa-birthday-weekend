@@ -545,8 +545,9 @@
       draw(); frameId = window.requestAnimationFrame(loop);
     };
     const fullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement;
+    const supportsFullscreen = () => Boolean(overlay.requestFullscreen || overlay.webkitRequestFullscreen);
     const updateFullscreenButton = () => {
-      const active = fullscreenElement() === overlay;
+      const active = fullscreenElement() === overlay || document.body.classList.contains("is-party-immersive");
       fullscreenButton.innerHTML = `<i class="ph ${active ? "ph-arrows-in" : "ph-arrows-out"}" aria-hidden="true"></i>`;
       fullscreenButton.setAttribute("aria-label", active ? "Exit full screen" : "Open full screen");
       fullscreenButton.title = active ? "Exit full screen" : "Open full screen";
@@ -556,20 +557,21 @@
         if (fullscreenElement()) {
           if (document.exitFullscreen) await document.exitFullscreen();
           else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-        } else if (overlay.requestFullscreen) {
-          await overlay.requestFullscreen();
-        } else if (overlay.webkitRequestFullscreen) {
-          overlay.webkitRequestFullscreen();
+        } else if (supportsFullscreen()) {
+          if (overlay.requestFullscreen) await overlay.requestFullscreen({ navigationUI: "hide" });
+          else overlay.webkitRequestFullscreen();
         } else {
-          statusNode.textContent = "Full screen is not supported in this browser.";
+          const active = document.body.classList.toggle("is-party-immersive");
+          statusNode.textContent = active ? "Party Mode is already edge to edge in this browser." : "Fly through the photo gates without touching them.";
         }
       } catch {
-        statusNode.textContent = "Full screen could not be opened here.";
+        const active = document.body.classList.toggle("is-party-immersive");
+        statusNode.textContent = active ? "Party Mode is already edge to edge in this browser." : "Fly through the photo gates without touching them.";
       }
       updateFullscreenButton();
     };
     const show = () => { overlay.hidden = false; document.body.classList.add("is-party-game-open"); updateFullscreenButton(); reset(); loadLeaderboard(); lastFrame = performance.now(); window.cancelAnimationFrame(frameId); frameId = window.requestAnimationFrame(loop); };
-    const hide = () => { if (fullscreenElement() === overlay) { document.exitFullscreen?.(); document.webkitExitFullscreen?.(); } overlay.hidden = true; document.body.classList.remove("is-party-game-open"); window.cancelAnimationFrame(frameId); try { sessionStorage.setItem("marisa-birthday-access", "guest"); } catch { /* no-op */ } };
+    const hide = () => { if (fullscreenElement() === overlay) { document.exitFullscreen?.(); document.webkitExitFullscreen?.(); } overlay.hidden = true; document.body.classList.remove("is-party-game-open", "is-party-immersive"); window.cancelAnimationFrame(frameId); returnToPassword(); };
     overlay.addEventListener("dblclick", (event) => event.preventDefault(), { passive: false });
     resultsForm.addEventListener("submit", async (event) => {
       event.preventDefault();
@@ -599,6 +601,19 @@
     partyGame = { show, hide };
   };
 
+  const returnToPassword = () => {
+    document.documentElement.classList.add("is-gated");
+    document.body.classList.remove("is-unlocked", "is-party-mode", "is-party-game-open", "is-party-immersive", "is-marisa-mode");
+    const marisaView = $("[data-marisa-view]");
+    if (marisaView) marisaView.hidden = true;
+    marisaWrappedMode = false;
+    try { sessionStorage.removeItem("marisa-birthday-access"); } catch { /* no-op */ }
+    $("[data-gate-form]")?.reset();
+    const status = $("[data-gate-status]");
+    if (status) status.textContent = "";
+    window.setTimeout(() => $("#gate-password")?.focus(), 0);
+  };
+
   const unlockWebsite = (mode) => {
     try { sessionStorage.setItem("marisa-birthday-access", mode); } catch { /* private browsing can disable storage */ }
     document.documentElement.classList.remove("is-gated");
@@ -618,10 +633,11 @@
   };
 
   const setupGate = () => {
+    const form = $("[data-gate-form]");
+    $("[data-marisa-back]")?.addEventListener("click", returnToPassword);
     let access = "";
     try { access = sessionStorage.getItem("marisa-birthday-access") || ""; } catch { /* continue locked */ }
     if (access === "guest" || access === "marisa" || access === "party") { unlockWebsite(access); return; }
-    const form = $("[data-gate-form]");
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const password = new FormData(form).get("password").toString().trim().toLowerCase();
@@ -636,12 +652,6 @@
       }
       status.textContent = "Nope. Nothing to see here 🤨";
       form.reset();
-    });
-    $("[data-marisa-back]")?.addEventListener("click", () => {
-      document.body.classList.remove("is-marisa-mode");
-      $("[data-marisa-view]").hidden = true;
-      marisaWrappedMode = false;
-      try { sessionStorage.setItem("marisa-birthday-access", "guest"); } catch { /* no-op */ }
     });
   };
 
