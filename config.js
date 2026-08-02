@@ -1,8 +1,8 @@
 /* Public configuration only. Never put banking credentials or secrets here. */
 window.MARISA_CONFIG = {
-  RSVP_ENDPOINT: "https://formsubmit.co/nathanbrown-bennett%2Bmarisa-birthday@hotmail.com",
-  NOTES_ENDPOINT: "https://formsubmit.co/nathanbrown-bennett%2Bmarisa-birthday@hotmail.com",
-  PAYMENTS_ENDPOINT: "https://formsubmit.co/nathanbrown-bennett%2Bmarisa-birthday@hotmail.com",
+  RSVP_ENDPOINT: "https://formsubmit.co/b543a0ea0dbc119984896efc03bc4875",
+  NOTES_ENDPOINT: "https://formsubmit.co/b543a0ea0dbc119984896efc03bc4875",
+  PAYMENTS_ENDPOINT: "https://formsubmit.co/b543a0ea0dbc119984896efc03bc4875",
   UPLOAD_ENDPOINT: "",
   FIREBASE_DATABASE_URL: "https://marisa-birthday-2026-default-rtdb.europe-west1.firebasedatabase.app",
   FIREBASE_ACCESS_KEY: "happybirthday",

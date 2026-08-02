@@ -816,6 +816,11 @@
         if (file.size > 8 * 1024 * 1024) { setStatus(`${attachment.file.name} is over the 8MB storage limit — please choose ${attachment.kind === "video" ? "a shorter or lower-resolution clip" : "a smaller file"}.`); return; }
         files.push({ ...attachment, file });
       }
+      const totalAttachmentBytes = files.reduce((total, attachment) => total + attachment.file.size, 0);
+      if (totalAttachmentBytes > 9 * 1024 * 1024) {
+        setStatus("These attachments are too large to send in one email. Please remove one or choose smaller files.");
+        return;
+      }
       const existing = read(storageKeys.media, []);
       const notes = read(storageKeys.notes, []);
       let sharedSaved = false;
@@ -825,7 +830,7 @@
         if (sharedBase) { try { sharedSaved = (await pushShared("notes", note)) || sharedSaved; } catch { /* local save still succeeds */ } }
       }
       for (const attachment of files) {
-        if (config.UPLOAD_ENDPOINT) {
+        if (config.UPLOAD_ENDPOINT && config.UPLOAD_ENDPOINT !== config.NOTES_ENDPOINT) {
           const body = new FormData();
           body.set("name", data.name.trim()); body.set("caption", caption); body.set("type", attachment.kind); body.set("file", attachment.file, attachment.file.name);
           try { await fetch(config.UPLOAD_ENDPOINT, { method: "POST", body }); } catch { setStatus("Cloud upload failed; saving this memory locally instead."); }
@@ -835,20 +840,25 @@
         if (sharedBase) { try { sharedSaved = (await pushShared("media", item)) || sharedSaved; } catch { /* local save still succeeds */ } }
       }
       let forwarded = false;
-      if (caption && config.NOTES_ENDPOINT) {
+      if (config.NOTES_ENDPOINT) {
         try {
           const body = new FormData();
           body.set("name", data.name.trim());
-          body.set("body", caption);
-          body.set("_subject", "Marisa birthday weekend memory message");
+          body.set("mood", data.mood || "shared memory");
+          body.set("body", caption || "Shared media upload");
+          body.set("post_id", postId);
+          body.set("attachment_count", String(files.length));
+          body.set("attachments", files.map((attachment) => attachment.file.name).join(", ") || "None");
+          body.set("_subject", `Marisa birthday memory from ${data.name.trim()}`);
           body.set("_template", "table");
+          files.forEach((attachment, index) => body.append(`attachment_${index + 1}`, attachment.file, attachment.file.name));
           await fetch(config.NOTES_ENDPOINT, { method: "POST", body, mode: "no-cors" });
           forwarded = true;
         } catch { /* shared save still succeeds */ }
       }
       try { write(storageKeys.notes, notes); write(storageKeys.media, existing); } catch { status.textContent = "That capture is too large for browser-only saving. Add an upload endpoint in config.js for larger shared media."; return; }
       attachments.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
-      attachments.length = 0; memoryPage = Math.max(0, Math.ceil((mergeShared(sharedNotes, notes).length + mergeShared(sharedMedia, existing).length) / 10) - 1); renderMemories(); form.reset(); renderPreview(); input.accept = "image/*,video/*,audio/*"; input.multiple = true; input.removeAttribute("capture"); status.textContent = sharedSaved && forwarded ? "Message and media shared and forwarded for email delivery." : sharedSaved ? "Submitted to the shared memory wall." : config.UPLOAD_ENDPOINT ? "Submitted to the shared memory wall." : "Submitted to this browser's memory wall only."; toast(sharedSaved || config.UPLOAD_ENDPOINT ? "Memory submitted to the shared wall." : "Memory saved locally to the wall.");
+      attachments.length = 0; memoryPage = Math.max(0, Math.ceil((mergeShared(sharedNotes, notes).length + mergeShared(sharedMedia, existing).length) / 10) - 1); renderMemories(); form.reset(); renderPreview(); input.accept = "image/*,video/*,audio/*"; input.multiple = true; input.removeAttribute("capture"); status.textContent = sharedSaved && forwarded ? "Message and media shared and forwarded in one email." : forwarded ? "Memory submitted and forwarded in one email." : sharedSaved ? "Submitted to the shared memory wall." : config.UPLOAD_ENDPOINT ? "Submitted to the shared memory wall." : "Submitted to this browser's memory wall only."; toast(sharedSaved || forwarded || config.UPLOAD_ENDPOINT ? "Memory submitted to the shared wall." : "Memory saved locally to the wall.");
     });
   };
 
