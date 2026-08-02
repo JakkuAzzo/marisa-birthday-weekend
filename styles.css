@@ -59,6 +59,7 @@ html.is-gated .site-shell { visibility: hidden; height: 100vh; overflow: hidden;
 .section-posters { position: absolute !important; z-index: 0 !important; inset: 0; overflow: hidden; pointer-events: none; }
 .poster-frame { position: absolute; display: block; width: clamp(116px, 13vw, 190px); padding: 9px 9px 28px; background: #f9f0e1; box-shadow: 0 15px 28px rgba(50, 20, 38, .14); opacity: .68; }
 .poster-frame img { width: 100%; aspect-ratio: .78; object-fit: cover; object-position: 50% 28%; filter: saturate(.78) contrast(.94); }
+.home-links .poster-frame-2 img { object-position: 18% 28%; }
 .poster-frame-1 { top: 8%; left: -3%; transform: rotate(-8deg); }
 .poster-frame-2 { top: 46%; right: -3%; transform: rotate(7deg); }
 .poster-frame-3 { right: 20%; bottom: -16%; transform: rotate(-5deg); }

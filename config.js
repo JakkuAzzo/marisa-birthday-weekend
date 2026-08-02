@@ -12,7 +12,6 @@ window.MARISA_CONFIG = {
   contributionAmounts: {
     boat: 31,
     cinema: 12,
-    stay: 82.80,
     gift: 15
   }
 };

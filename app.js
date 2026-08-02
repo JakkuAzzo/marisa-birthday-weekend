@@ -63,7 +63,6 @@
   const contributions = [
     { id: "boat", title: "Boat hire", detail: "2 hours · Saturday before sunset", icon: "ph-sailboat", amount: () => config.contributionAmounts?.boat ?? 31 },
     { id: "cinema", title: "Vue cinema", detail: "Spider-Man: Brand New Day", icon: "ph-film-strip", amount: () => config.contributionAmounts?.cinema ?? 12 },
-    { id: "stay", title: "Accommodation", detail: "3 nights · estimated 5 paying guests", icon: "ph-house-line", amount: () => config.contributionAmounts?.stay ?? 82.80 },
     { id: "gift", title: "Gift fund", detail: "Optional group gift for Marisa", icon: "ph-gift", amount: () => config.contributionAmounts?.gift ?? 15 }
   ];
 
