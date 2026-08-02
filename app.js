@@ -89,8 +89,10 @@
   const sharedBase = config.FIREBASE_DATABASE_URL ? `${config.FIREBASE_DATABASE_URL.replace(/\/$/, "")}/birthday` : "";
   const sharedFetch = async (path, options = {}) => {
     if (!sharedBase) return null;
-    const response = await fetch(`${sharedBase}/${path}.json`, { cache: "no-store", ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
-    if (!response.ok) throw new Error(`Shared storage returned ${response.status}`);
+    const [resourcePath, queryString] = path.split("?");
+    const requestUrl = sharedBase + "/" + resourcePath + ".json" + (queryString ? "?" + queryString : "");
+    const response = await fetch(requestUrl, { cache: "no-store", ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
+    if (!response.ok) throw new Error("Shared storage returned " + response.status);
     return response.status === 204 ? null : response.json();
   };
   const sharedItems = (payload) => payload && typeof payload === "object" ? Object.entries(payload).map(([remoteId, item]) => ({ ...item, remoteId })) : [];
@@ -257,7 +259,9 @@
   const loadSharedData = async () => {
     if (!sharedBase) return;
     try {
-      const [rsvps, notes, media] = await Promise.all([sharedFetch("rsvps"), sharedFetch("notes"), sharedFetch("media")]);
+      const mediaLimit = Math.max(6, Math.min(40, Number(config.FIREBASE_MEDIA_LIMIT) || 24));
+      const recentMediaQuery = "media?orderBy=%22%24key%22&limitToLast=" + mediaLimit;
+      const [rsvps, notes, media] = await Promise.all([sharedFetch("rsvps"), sharedFetch("notes"), sharedFetch(recentMediaQuery)]);
       liveRsvps = sharedItems(rsvps);
       sharedNotes = sharedItems(notes);
       sharedMedia = sharedItems(media);
@@ -407,7 +411,7 @@
     overlay.className = "party-game";
     overlay.hidden = true;
     overlay.setAttribute("aria-labelledby", "party-game-title");
-    overlay.innerHTML = `<div class="party-game-shell"><div class="party-game-header"><div><p class="party-game-eyebrow">PARTY MODE</p><h1 id="party-game-title">Flappy <em>Marisa.</em></h1><p class="party-game-copy">Help Marisa fly between the birthday memories. Tap, click or press Space to flap.</p></div><div class="party-game-header-actions"><button class="party-game-fullscreen" type="button" data-party-fullscreen aria-label="Open full screen" title="Open full screen"><i class="ph ph-arrows-out" aria-hidden="true"></i></button><button class="party-game-close" type="button" data-party-close aria-label="Close party game"><i class="ph ph-x" aria-hidden="true"></i></button></div></div><div class="party-game-hud"><span>Score <strong data-party-score>0</strong></span><span>Best <strong data-party-best>0</strong></span></div><div class="party-game-board"><canvas width="800" height="500" data-party-canvas aria-label="Flappy Marisa birthday game"></canvas><div class="party-game-board-message" data-party-message>Ready when you are ✦</div></div><div class="party-game-actions"><button class="button button-coral" type="button" data-party-start>Start game</button><button class="button button-outline" type="button" data-party-close>Back to weekend</button></div><p class="party-game-status" data-party-status>Fly through the photo gates without touching them.</p><div class="party-game-panels"><form class="party-game-results" data-party-results hidden><p class="party-game-panel-kicker">NICE FLIGHT</p><h2>Your score: <strong data-party-final-score>0</strong></h2><label for="party-player-name">Enter your name to save it</label><div class="party-game-score-row"><input id="party-player-name" data-party-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" required /><button class="button button-coral" type="submit">Save score</button></div><p class="party-game-save-status" data-party-save-status role="status" aria-live="polite"></p></form><section class="party-game-leaderboard" aria-labelledby="party-leaderboard-title"><p class="party-game-panel-kicker">THE HALL OF FAME</p><h2 id="party-leaderboard-title">Leaderboard</h2><ol data-party-leaderboard><li class="party-game-empty">Loading scores…</li></ol></section></div></div>`;
+    overlay.innerHTML = `<div class="party-game-shell"><div class="party-game-header"><div><p class="party-game-eyebrow">PARTY MODE</p><h1 id="party-game-title">Flappy <em>Marisa.</em></h1><p class="party-game-copy">Help Marisa fly between the birthday memories. Tap, click or press Space to flap.</p></div><div class="party-game-header-actions"><button class="party-game-fullscreen" type="button" data-party-fullscreen aria-label="Open full screen" title="Open full screen"><i class="ph ph-arrows-out" aria-hidden="true"></i></button><button class="party-game-close" type="button" data-party-close aria-label="Close party game"><i class="ph ph-x" aria-hidden="true"></i></button></div></div><div class="party-game-hud"><span>Score <strong data-party-score>0</strong></span><span>Best <strong data-party-best>0</strong></span></div><div class="party-game-board"><canvas width="800" height="500" data-party-canvas aria-label="Flappy Marisa birthday game"></canvas><div class="party-game-board-message" data-party-message>Ready when you are ✦</div></div><div class="party-game-actions"><button class="button button-coral" type="button" data-party-start>Start game</button></div><p class="party-game-status" data-party-status>Fly through the photo gates without touching them.</p><div class="party-game-panels"><form class="party-game-results" data-party-results hidden><p class="party-game-panel-kicker">NICE FLIGHT</p><h2>Your score: <strong data-party-final-score>0</strong></h2><label for="party-player-name">Enter your name to save it</label><div class="party-game-score-row"><input id="party-player-name" data-party-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" required /><button class="button button-coral" type="submit">Save score</button></div><p class="party-game-save-status" data-party-save-status role="status" aria-live="polite"></p></form><section class="party-game-leaderboard" aria-labelledby="party-leaderboard-title"><p class="party-game-panel-kicker">THE HALL OF FAME</p><h2 id="party-leaderboard-title">Leaderboard</h2><ol data-party-leaderboard><li class="party-game-empty">Loading scores…</li></ol></section></div></div>`;
     document.body.appendChild(overlay);
     const canvas = $("[data-party-canvas]", overlay);
     const context = canvas.getContext("2d");
@@ -712,11 +716,11 @@
   });
 
   const compressImage = (file) => new Promise((resolve) => {
-    if (!file.type.startsWith("image/") || file.size < 450 * 1024) { resolve(file); return; }
+    if (!file.type.startsWith("image/") || file.type === "image/svg+xml") { resolve(file); return; }
     const image = new Image();
     const sourceUrl = URL.createObjectURL(file);
     image.addEventListener("load", () => {
-      const maxDimension = 1600;
+      const maxDimension = 1280;
       const scale = Math.min(1, maxDimension / Math.max(image.naturalWidth, image.naturalHeight));
       const canvas = document.createElement("canvas");
       canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
@@ -724,8 +728,8 @@
       canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
       canvas.toBlob((blob) => {
         URL.revokeObjectURL(sourceUrl);
-        resolve(blob ? new File([blob], `${file.name.replace(/\.[^.]+$/, "")}.jpg`, { type: "image/jpeg" }) : file);
-      }, "image/jpeg", .82);
+        resolve(blob && blob.size < file.size ? new File([blob], file.name.replace(/\.[^.]+$/, "") + ".jpg", { type: "image/jpeg" }) : file);
+      }, "image/jpeg", .78);
     }, { once: true });
     image.addEventListener("error", () => { URL.revokeObjectURL(sourceUrl); resolve(file); }, { once: true });
     image.src = sourceUrl;
@@ -747,6 +751,10 @@
     let timerId = null;
     const status = $("[data-memory-status]");
     const maxVideoSeconds = 30;
+    const maxAudioSeconds = 90;
+    const maxAttachments = 3;
+    const mediaLimits = { image: 1.5 * 1024 * 1024, video: 4 * 1024 * 1024, audio: 2 * 1024 * 1024 };
+    const maxTotalBytes = 6 * 1024 * 1024;
     const setStatus = (message) => { if (status) status.textContent = message; };
     const formatDuration = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
     const fileKind = (file) => {
@@ -756,14 +764,14 @@
       if (file.type.startsWith("audio/") || /\.(mp3|m4a|wav|ogg|webm)$/i.test(name)) return "audio";
       return "";
     };
-    const getVideoDuration = (file) => new Promise((resolve) => {
+    const getMediaDuration = (file, kind) => new Promise((resolve) => {
       const sourceUrl = URL.createObjectURL(file);
-      const video = document.createElement("video");
-      video.preload = "metadata";
+      const media = document.createElement(kind === "audio" ? "audio" : "video");
+      media.preload = "metadata";
       const finish = (duration) => { URL.revokeObjectURL(sourceUrl); resolve(duration); };
-      video.addEventListener("loadedmetadata", () => finish(video.duration), { once: true });
-      video.addEventListener("error", () => finish(null), { once: true });
-      video.src = sourceUrl;
+      media.addEventListener("loadedmetadata", () => finish(media.duration), { once: true });
+      media.addEventListener("error", () => finish(null), { once: true });
+      media.src = sourceUrl;
     });
     const renderPreview = () => {
       if (!preview) return;
@@ -779,23 +787,27 @@
     };
     const addFiles = async (files) => {
       const candidates = Array.from(files);
+      const available = candidates.slice(0, Math.max(0, maxAttachments - attachments.length));
+      const skipped = candidates.length - available.length;
       const accepted = [];
-      let rejectedVideo = false;
-      for (const file of candidates) {
+      let rejectedDuration = false;
+      for (const file of available) {
         const kind = fileKind(file);
         if (!kind) continue;
-        if (kind === "video") {
-          setStatus("Checking video length…");
-          const duration = await getVideoDuration(file);
-          if (Number.isFinite(duration) && duration > maxVideoSeconds) { rejectedVideo = true; continue; }
+        if (kind === "video" || kind === "audio") {
+          setStatus("Checking " + kind + " length…");
+          const duration = await getMediaDuration(file, kind);
+          const durationLimit = kind === "video" ? maxVideoSeconds : maxAudioSeconds;
+          if (Number.isFinite(duration) && duration > durationLimit) { rejectedDuration = true; continue; }
         }
         accepted.push({ file, kind });
       }
-      accepted.forEach(({ file, kind }) => attachments.push({ id: `attachment-${Date.now()}-${Math.random().toString(16).slice(2)}`, file, kind, previewUrl: URL.createObjectURL(file) }));
+      accepted.forEach(({ file, kind }) => attachments.push({ id: "attachment-" + Date.now() + "-" + Math.random().toString(16).slice(2), file, kind, previewUrl: URL.createObjectURL(file) }));
       input.value = "";
       renderPreview();
-      if (rejectedVideo) setStatus(`Videos must be ${maxVideoSeconds} seconds or shorter. The longer video was not added.`);
-      else if (accepted.length) setStatus(`${attachments.length} item${attachments.length === 1 ? "" : "s"} ready to submit.`);
+      if (rejectedDuration) setStatus("Videos must be " + maxVideoSeconds + "s or voice notes " + maxAudioSeconds + "s or shorter. Longer files were not added.");
+      else if (skipped) setStatus("Only " + maxAttachments + " files can be submitted together.");
+      else if (accepted.length) setStatus(attachments.length + " item" + (attachments.length === 1 ? "" : "s") + " ready to submit.");
       else if (candidates.length) setStatus("Only photos, videos and audio files can be added.");
     };
     const pickFiles = (accept, capture) => {
@@ -849,14 +861,15 @@
       const postId = `post-${Date.now()}-${Math.random().toString(16).slice(2)}`;
       const files = [];
       for (const attachment of attachments) {
-        setStatus(`Preparing ${attachment.kind} ${files.length + 1} of ${attachments.length}…`);
+        setStatus("Preparing " + attachment.kind + " " + (files.length + 1) + " of " + attachments.length + "…");
         const file = await compressImage(attachment.file);
-        if (file.size > 8 * 1024 * 1024) { setStatus(`${attachment.file.name} is over the 8MB storage limit — please choose ${attachment.kind === "video" ? "a shorter or lower-resolution clip" : "a smaller file"}.`); return; }
+        const fileLimit = mediaLimits[attachment.kind];
+        if (file.size > fileLimit) { setStatus(attachment.file.name + " is over the " + Math.round(fileLimit / 1024 / 1024) + "MB " + attachment.kind + " limit — please choose a smaller file."); return; }
         files.push({ ...attachment, file });
       }
       const totalAttachmentBytes = files.reduce((total, attachment) => total + attachment.file.size, 0);
-      if (totalAttachmentBytes > 9 * 1024 * 1024) {
-        setStatus("These attachments are too large to send in one email. Please remove one or choose smaller files.");
+      if (totalAttachmentBytes > maxTotalBytes) {
+        setStatus("These attachments are too large together. Please remove one or choose smaller files.");
         return;
       }
       const existing = read(storageKeys.media, []);
