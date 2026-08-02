@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>Memories · Marisa's Birthday</title><meta name="theme-color" content="#321426" /><link rel="icon" href="favicon.svg" type="image/svg+xml" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" media="print" onload="this.media='all'" /><script defer src="https://unpkg.com/@phosphor-icons/web"></script><link rel="stylesheet" href="styles.css?v=12" /><script>document.documentElement.classList.add("is-gated");</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" media="print" onload="this.media='all'" /><script defer src="https://unpkg.com/@phosphor-icons/web"></script><link rel="stylesheet" href="styles.css?v=13" /><script>document.documentElement.classList.add("is-gated");</script>
   </head>
   <body class="page-memories">
     <a class="skip-link" href="#main">Skip to content</a>
@@ -18,23 +18,24 @@
             <form class="memory-uploader" data-memory-form>
               <div class="form-row">
                 <div><label for="memory-name">Your name</label><input id="memory-name" name="name" type="text" placeholder="Your name" required /></div>
-                <div><label for="memory-kind">What are you sharing?</label><select id="memory-kind" name="kind"><option value="image">Photo</option><option value="video">Video</option><option value="audio">Voice note</option><option value="message">Written message</option></select></div>
               </div>
               <div class="form-row">
                 <div><label for="memory-mood">Vibe <span>(optional)</span></label><select id="memory-mood" name="mood"><option value="Pure love">Pure love</option><option value="Big laughs">Big laughs</option><option value="Soft &amp; sweet">Soft &amp; sweet</option><option value="Main character energy">Main character energy</option></select></div>
               </div>
-              <label for="memory-caption">Caption or message <span>(required for written messages)</span></label>
+              <p class="upload-hint">Write a message and attach any combination of photos, videos and voice notes.</p>
+              <label for="memory-caption">Caption or message <span>(optional)</span></label>
               <textarea id="memory-caption" name="caption" rows="3" placeholder="A memory, a wish, a voice-note caption…"></textarea>
               <div class="capture-tools"><button class="capture-button" type="button" data-capture-photo><i class="ph ph-camera" aria-hidden="true"></i> Take a photo</button><button class="capture-button" type="button" data-capture-video><i class="ph ph-video-camera" aria-hidden="true"></i> Record a video</button><button class="capture-button" type="button" data-record-voice aria-pressed="false"><i class="ph ph-microphone" aria-hidden="true"></i> Record voice note <span data-record-timer>00:00</span></button></div>
-              <label class="upload-dropzone" for="memory-upload"><i class="ph ph-upload-simple" aria-hidden="true"></i><strong>Choose or drop a file</strong><span>Images, videos and voice notes · max 8MB after automatic image compression</span></label>
-              <input class="sr-only" id="memory-upload" name="file" type="file" accept="image/*,video/*,audio/*" data-upload-input />
-              <button class="button button-coral" type="submit"><i class="ph ph-plus" aria-hidden="true"></i> Add to memories</button><p class="form-status" data-memory-status role="status"></p>
+              <label class="upload-dropzone" for="memory-upload"><i class="ph ph-upload-simple" aria-hidden="true"></i><strong>Choose or drop files</strong><span>Photos, videos and voice notes · add as many as you like</span></label>
+              <input class="sr-only" id="memory-upload" name="file" type="file" accept="image/*,video/*,audio/*" multiple data-upload-input />
+              <div class="memory-preview" data-memory-preview hidden aria-live="polite"></div>
+              <button class="button button-coral" type="submit"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i> Submit to memory wall</button><p class="form-status" data-memory-status role="status"></p>
             </form>
           </div>
           <div class="memory-wall reveal reveal-delay"><div class="memory-wall-header"><div><p class="eyebrow coral">NEW UPLOADS</p><p class="memory-wall-meta" data-memory-meta>Showing new uploads</p></div><div class="carousel-controls"><button class="icon-button" type="button" aria-label="Previous new uploads" data-memory-prev><i class="ph ph-arrow-left" aria-hidden="true"></i></button><button class="icon-button" type="button" aria-label="Next new uploads" data-memory-next><i class="ph ph-arrow-right" aria-hidden="true"></i></button></div></div><div class="memory-grid" data-memory-grid></div></div>
         </section>
       </main>
       <footer class="site-footer section-dark"><div><a class="brand" href="index.html"><span class="brand-script">Marisa's</span><span class="brand-label">BIRTHDAY WEEKEND</span></a></div><p>Private group link · made with love</p><a href="index.html" class="back-top">Back home <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></footer>
-    </div><div class="toast" data-toast role="status" aria-live="polite"></div><script src="config.js"></script><script src="app.js?v=14"></script>
+    </div><div class="toast" data-toast role="status" aria-live="polite"></div><script src="config.js"></script><script src="app.js?v=15"></script>
   </body>
 </html>

@@ -509,14 +509,13 @@
   const setupMemoryForm = () => {
     const form = $("[data-memory-form]");
     if (!form) return;
-    const kind = $("#memory-kind");
     const input = $("[data-upload-input]");
+    const preview = $("[data-memory-preview]");
     const dropzone = $(".upload-dropzone");
     const photoButton = $("[data-capture-photo]");
     const videoButton = $("[data-capture-video]");
     const recordButton = $("[data-record-voice]");
-    const timer = $("[data-record-timer]");
-    let recordedFile = null;
+    const attachments = [];
     let recorder = null;
     let recordingStream = null;
     let recordingStartedAt = 0;
@@ -524,24 +523,55 @@
     const status = $("[data-memory-status]");
     const setStatus = (message) => { if (status) status.textContent = message; };
     const formatDuration = (seconds) => `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(seconds % 60).padStart(2, "0")}`;
-    const refreshFileRequirement = () => {
-      const captureMode = kind.value === "image" || kind.value === "video" ? "environment" : "";
-      input.required = kind.value !== "message";
-      input.accept = kind.value === "message" ? "" : `${kind.value}/*`;
-      input.setAttribute("capture", captureMode);
-      const uploadLabels = { image: "photo", video: "video", audio: "voice note" };
-      dropzone.querySelector("strong").textContent = kind.value === "message" ? "No file needed for a written message" : `Choose or drop a ${uploadLabels[kind.value] ?? "file"}`;
-      dropzone.querySelector("span").textContent = kind.value === "message" ? "Written messages are shared instantly" : "Images, videos and voice notes · max 8MB after automatic image compression";
-      if (kind.value !== "audio") recordedFile = null;
+    const fileKind = (file) => {
+      const name = file.name.toLowerCase();
+      if (file.type.startsWith("image/") || /\.(jpe?g|png|gif|webp|heic|heif)$/i.test(name)) return "image";
+      if (file.type.startsWith("video/") || /\.(mp4|mov|m4v|webm|avi)$/i.test(name)) return "video";
+      if (file.type.startsWith("audio/") || /\.(mp3|m4a|wav|ogg|webm)$/i.test(name)) return "audio";
+      return "";
     };
-    kind.addEventListener("change", refreshFileRequirement);
-    refreshFileRequirement();
-    photoButton?.addEventListener("click", () => { kind.value = "image"; refreshFileRequirement(); input.click(); });
-    videoButton?.addEventListener("click", () => { kind.value = "video"; refreshFileRequirement(); input.click(); });
+    const renderPreview = () => {
+      if (!preview) return;
+      preview.hidden = !attachments.length;
+      preview.innerHTML = attachments.map((attachment) => {
+        const media = attachment.kind === "image"
+          ? `<img src="${attachment.previewUrl}" alt="Preview of ${escapeHtml(attachment.file.name)}" />`
+          : attachment.kind === "video"
+            ? `<video controls playsinline preload="metadata" src="${attachment.previewUrl}" aria-label="Preview of ${escapeHtml(attachment.file.name)}"></video>`
+            : `<audio controls preload="metadata" src="${attachment.previewUrl}" aria-label="Preview of ${escapeHtml(attachment.file.name)}"></audio>`;
+        return `<article class="memory-preview-card" data-preview-id="${attachment.id}"><div class="memory-preview-media">${media}</div><div class="memory-preview-footer"><span>${attachment.kind} · ${escapeHtml(attachment.file.name)}</span><button class="memory-preview-remove" type="button" data-remove-attachment="${attachment.id}" aria-label="Remove ${escapeHtml(attachment.file.name)}"><i class="ph ph-x" aria-hidden="true"></i></button></div></article>`;
+      }).join("");
+    };
+    const addFiles = (files) => {
+      const accepted = Array.from(files).filter((file) => fileKind(file));
+      accepted.forEach((file) => attachments.push({ id: `attachment-${Date.now()}-${Math.random().toString(16).slice(2)}`, file, kind: fileKind(file), previewUrl: URL.createObjectURL(file) }));
+      input.value = "";
+      renderPreview();
+      if (accepted.length) setStatus(`${attachments.length} item${attachments.length === 1 ? "" : "s"} ready to submit.`);
+      if (accepted.length < files.length) setStatus("Only photos, videos and audio files can be added.");
+    };
+    const pickFiles = (accept, capture) => {
+      input.accept = accept;
+      input.multiple = false;
+      if (capture) input.setAttribute("capture", capture); else input.removeAttribute("capture");
+      input.click();
+    };
+    photoButton?.addEventListener("click", () => pickFiles("image/*", "environment"));
+    videoButton?.addEventListener("click", () => pickFiles("video/*", "environment"));
     ["dragenter", "dragover"].forEach((eventName) => dropzone.addEventListener(eventName, (event) => { event.preventDefault(); dropzone.classList.add("is-dragging"); }));
     ["dragleave", "drop"].forEach((eventName) => dropzone.addEventListener(eventName, (event) => { event.preventDefault(); dropzone.classList.remove("is-dragging"); }));
-    dropzone.addEventListener("drop", (event) => { if (event.dataTransfer.files.length) input.files = event.dataTransfer.files; });
-    input.addEventListener("change", () => { if (input.files.length) setStatus(`${input.files[0].name} is ready to add.`); });
+    dropzone.addEventListener("drop", (event) => { if (event.dataTransfer.files.length) addFiles(event.dataTransfer.files); });
+    input.addEventListener("change", () => { if (input.files.length) addFiles(input.files); input.accept = "image/*,video/*,audio/*"; input.multiple = true; input.removeAttribute("capture"); });
+    preview?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-remove-attachment]");
+      if (!button) return;
+      const index = attachments.findIndex((attachment) => attachment.id === button.dataset.removeAttachment);
+      if (index < 0) return;
+      URL.revokeObjectURL(attachments[index].previewUrl);
+      attachments.splice(index, 1);
+      renderPreview();
+      setStatus(attachments.length ? `${attachments.length} item${attachments.length === 1 ? "" : "s"} ready to submit.` : "Attachment removed.");
+    });
     recordButton?.addEventListener("click", async () => {
       if (recorder?.state === "recording") { recorder.stop(); return; }
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { setStatus("Voice recording is not supported in this browser. You can upload an audio file instead."); return; }
@@ -552,50 +582,63 @@
         recorder.addEventListener("dataavailable", (event) => { if (event.data.size) chunks.push(event.data); });
         recorder.addEventListener("stop", () => {
           const blob = new Blob(chunks, { type: recorder.mimeType || "audio/webm" });
-          recordedFile = new File([blob], "marisa-voice-note.webm", { type: blob.type });
+          addFiles([new File([blob], `marisa-voice-note-${Date.now()}.webm`, { type: blob.type })]);
           recordingStream?.getTracks().forEach((track) => track.stop());
-          window.clearInterval(timerId); timer.textContent = "00:00"; recordButton.textContent = "Record voice note"; recordButton.setAttribute("aria-pressed", "false");
-          kind.value = "audio"; refreshFileRequirement(); setStatus("Voice note ready — add it to the memory wall when you are happy.");
+          window.clearInterval(timerId); recordButton.innerHTML = '<i class="ph ph-microphone" aria-hidden="true"></i> Record voice note <span data-record-timer="">00:00</span>'; recordButton.setAttribute("aria-pressed", "false");
+          setStatus("Voice note ready — preview it below, remove it if needed, then submit.");
         });
-        recorder.start(); recordingStartedAt = Date.now(); timerId = window.setInterval(() => { timer.textContent = formatDuration(Math.floor((Date.now() - recordingStartedAt) / 1000)); }, 1000);
-        recordButton.textContent = "Stop recording"; recordButton.setAttribute("aria-pressed", "true"); setStatus("Recording… tap Stop recording when you are finished.");
+        recorder.start(); recordingStartedAt = Date.now(); recordButton.innerHTML = '<i class="ph ph-stop-circle" aria-hidden="true"></i> Stop recording <span data-record-timer="">00:00</span>'; timerId = window.setInterval(() => { const activeTimer = recordButton.querySelector("[data-record-timer]"); if (activeTimer) activeTimer.textContent = formatDuration(Math.floor((Date.now() - recordingStartedAt) / 1000)); }, 1000);
+        recordButton.setAttribute("aria-pressed", "true"); setStatus("Recording… tap Stop recording when you are finished.");
       } catch { setStatus("Microphone access was not granted. You can still upload a voice note file instead."); }
     });
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
       const data = Object.fromEntries(new FormData(form).entries());
-      const selectedFile = input.files[0] || recordedFile;
-      if (data.kind === "message" && !data.caption?.trim()) { status.textContent = "Write a message first, or choose a media type."; return; }
-      if (data.kind !== "message" && !selectedFile) { status.textContent = "Choose a file first, or switch to Written message."; return; }
-      setStatus(selectedFile?.type.startsWith("image/") ? "Optimising image for the shared wall…" : "Saving your memory…");
-      const file = selectedFile ? await compressImage(selectedFile) : null;
-      if (file && file.size > 8 * 1024 * 1024) { status.textContent = "That file is over 8MB after compression — please choose a smaller one."; return; }
-      if (config.UPLOAD_ENDPOINT) {
-        const body = new FormData(form);
-        body.delete("file");
-        if (file) body.set("file", file, file.name);
-        try { await fetch(config.UPLOAD_ENDPOINT, { method: "POST", body }); } catch { status.textContent = "Cloud upload failed; saving this memory locally instead."; }
+      const caption = data.caption?.trim() || "";
+      if (!attachments.length && !caption) { setStatus("Add a message or attach a photo, video or voice note first."); return; }
+      setStatus("Preparing your memory wall submission…");
+      const createdAt = new Date().toISOString();
+      const postId = `post-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      const files = [];
+      for (const attachment of attachments) {
+        setStatus(`Preparing ${attachment.kind} ${files.length + 1} of ${attachments.length}…`);
+        const file = await compressImage(attachment.file);
+        if (file.size > 8 * 1024 * 1024) { setStatus(`${attachment.file.name} is over 8MB after compression — please choose a smaller file.`); return; }
+        files.push({ ...attachment, file });
       }
       const existing = read(storageKeys.media, []);
-      const item = { name: data.name, caption: data.caption, type: data.kind, createdAt: new Date().toISOString(), tilt: `${(Math.random() * 4 - 2).toFixed(1)}deg` };
-      if (file) item.url = await fileToDataUrl(file);
+      const notes = read(storageKeys.notes, []);
       let sharedSaved = false;
-      if (sharedBase) { try { sharedSaved = await pushShared("media", item); } catch { /* local save still succeeds */ } }
+      if (caption) {
+        const note = { name: data.name.trim(), body: caption, mood: data.mood || "shared memory", createdAt, postId, tilt: `${(Math.random() * 4 - 2).toFixed(1)}deg` };
+        notes.push(note);
+        if (sharedBase) { try { sharedSaved = (await pushShared("notes", note)) || sharedSaved; } catch { /* local save still succeeds */ } }
+      }
+      for (const attachment of files) {
+        if (config.UPLOAD_ENDPOINT) {
+          const body = new FormData();
+          body.set("name", data.name.trim()); body.set("caption", caption); body.set("type", attachment.kind); body.set("file", attachment.file, attachment.file.name);
+          try { await fetch(config.UPLOAD_ENDPOINT, { method: "POST", body }); } catch { setStatus("Cloud upload failed; saving this memory locally instead."); }
+        }
+        const item = { name: data.name.trim(), caption: "", type: attachment.kind, createdAt, postId, tilt: `${(Math.random() * 4 - 2).toFixed(1)}deg`, url: await fileToDataUrl(attachment.file) };
+        existing.push(item);
+        if (sharedBase) { try { sharedSaved = (await pushShared("media", item)) || sharedSaved; } catch { /* local save still succeeds */ } }
+      }
       let forwarded = false;
-      if (data.kind === "message" && config.NOTES_ENDPOINT) {
+      if (caption && config.NOTES_ENDPOINT) {
         try {
           const body = new FormData();
-          body.set("name", data.name);
-          body.set("body", data.caption);
+          body.set("name", data.name.trim());
+          body.set("body", caption);
           body.set("_subject", "Marisa birthday weekend memory message");
           body.set("_template", "table");
           await fetch(config.NOTES_ENDPOINT, { method: "POST", body, mode: "no-cors" });
           forwarded = true;
         } catch { /* shared save still succeeds */ }
       }
-      existing.push(item);
-      try { write(storageKeys.media, existing); } catch { status.textContent = "That capture is too large for browser-only saving. Add an upload endpoint in config.js for larger shared media."; return; }
-      recordedFile = null; memoryPage = Math.max(0, Math.ceil((mergeShared(sharedNotes, read(storageKeys.notes, [])).length + mergeShared(sharedMedia, existing).length) / 10) - 1); renderMemories(); form.reset(); refreshFileRequirement(); status.textContent = sharedSaved && forwarded ? "Message shared and forwarded for email delivery." : sharedSaved ? "Added to the shared memory carousel." : config.UPLOAD_ENDPOINT ? "Added to the shared memory carousel." : "Added to this browser's memory carousel only."; toast(sharedSaved || config.UPLOAD_ENDPOINT ? "Memory added to the shared carousel." : "Memory saved locally to the carousel.");
+      try { write(storageKeys.notes, notes); write(storageKeys.media, existing); } catch { status.textContent = "That capture is too large for browser-only saving. Add an upload endpoint in config.js for larger shared media."; return; }
+      attachments.forEach((attachment) => URL.revokeObjectURL(attachment.previewUrl));
+      attachments.length = 0; memoryPage = Math.max(0, Math.ceil((mergeShared(sharedNotes, notes).length + mergeShared(sharedMedia, existing).length) / 10) - 1); renderMemories(); form.reset(); renderPreview(); input.accept = "image/*,video/*,audio/*"; input.multiple = true; input.removeAttribute("capture"); status.textContent = sharedSaved && forwarded ? "Message and media shared and forwarded for email delivery." : sharedSaved ? "Submitted to the shared memory wall." : config.UPLOAD_ENDPOINT ? "Submitted to the shared memory wall." : "Submitted to this browser's memory wall only."; toast(sharedSaved || config.UPLOAD_ENDPOINT ? "Memory submitted to the shared wall." : "Memory saved locally to the wall.");
     });
   };
 
