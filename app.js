@@ -44,14 +44,11 @@
     ["family-dinner.jpeg", "Dinner together", "Family and friends sharing a meal"],
     ["marisa-browns.jpeg", "Browns night", "Marisa outside Browns"],
     ["marisa-white-dress.jpeg", "White dress", "Marisa smiling in a white dress"]
-  ].map(([file, caption, alt], index) => ({ src: `assets/photos/${file}`, caption, alt, tilt: `${index % 2 ? 1 : -1}deg` }));
+  ].map(([file, caption, alt], index) => ({ src: `assets/photos/optimized/${file.replace(/\.jpeg$/, ".webp")}`, caption, alt, tilt: `${index % 2 ? 1 : -1}deg` }));
   const allPhotos = [...photos, ...archivePhotos];
   const firstBirthdayMedia = {
     video: "assets/media/marisa-first-birthday.mp4",
-    audio: "assets/media/marisa-first-birthday-song.m4a",
     poster: "assets/photos/optimized/marisa-bouquet.webp",
-    songStartSeconds: 144,
-    songEndSeconds: 176
   };
   const defaultAttendees = [
     { name: "Marisa", image: "assets/photos/optimized/marisa-roses.webp" },
@@ -77,91 +74,20 @@
   const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
   const money = (value) => `£${Number(value).toFixed(2)}`;
   const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char]));
-  const soundtrackStateKey = "marisa-birthday-soundtrack-state";
-  const readSoundtrackState = () => { try { return JSON.parse(sessionStorage.getItem(soundtrackStateKey) || "{}"); } catch { return {}; } };
-  const writeSoundtrackState = (state) => { try { sessionStorage.setItem(soundtrackStateKey, JSON.stringify(state)); } catch { /* private browsing can disable storage */ } };
-  const saveSoundtrackState = (soundtrack, playing = !soundtrack.paused) => writeSoundtrackState({ position: Number.isFinite(soundtrack.currentTime) ? soundtrack.currentTime : firstBirthdayMedia.songStartSeconds, playing });
-  const pauseBirthdaySoundtracks = () => $$('[data-first-birthday-song]').forEach((soundtrack) => { if (!soundtrack.paused) soundtrack.pause(); });
-  const getPageSoundtrack = () => $$('[data-first-birthday-song]').find((soundtrack) => !soundtrack.closest('[data-marisa-wrapped]')) || null;
-  let floatingSoundtrack = null;
-  let floatingPlayer = null;
-  const formatSoundtrackTime = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
-  const createFloatingPlayer = (includeAudio = false) => {
-    if (floatingPlayer) {
-      if (includeAudio && !$("[data-first-birthday-song]", floatingPlayer)) floatingPlayer.insertAdjacentHTML("beforeend", `<audio controls preload="metadata" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" data-song-end="${firstBirthdayMedia.songEndSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio>`);
-      return floatingPlayer;
-    }
-    floatingPlayer = document.createElement("div");
-    floatingPlayer.className = "persistent-soundtrack";
-    floatingPlayer.dataset.floatingSoundtrack = "true";
-    floatingPlayer.setAttribute("aria-label", "Birthday soundtrack player");
-    floatingPlayer.innerHTML = `<button class="soundtrack-toggle" type="button" data-soundtrack-toggle aria-label="Play soundtrack"><i class="ph ph-play" aria-hidden="true"></i></button><div class="soundtrack-player-copy"><strong>Marisa’s soundtrack</strong><span data-soundtrack-status>2:24–2:56 loop</span></div>${includeAudio ? `<audio controls preload="metadata" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" data-song-end="${firstBirthdayMedia.songEndSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio>` : ""}`;
-    document.body.append(floatingPlayer);
-    $("[data-soundtrack-toggle]", floatingPlayer).addEventListener("click", () => {
-      if (!floatingSoundtrack) return;
-      if (floatingSoundtrack.paused) floatingSoundtrack.play().catch(() => {}); else floatingSoundtrack.pause();
-    });
-    return floatingPlayer;
+  const spotifyEmbedUrl = (playlistUrl) => {
+    try {
+      const parsed = new URL(playlistUrl || "");
+      if (parsed.hostname !== "open.spotify.com") return "";
+      const match = parsed.pathname.match(/^\/playlist\/([A-Za-z0-9]+)$/);
+      return match ? `https://open.spotify.com/embed/playlist/${match[1]}?utm_source=generator&theme=0` : "";
+    } catch { return ""; }
   };
-  const bindFloatingSoundtrack = (soundtrack) => {
-    if (!soundtrack) return;
-    const player = createFloatingPlayer();
-    floatingSoundtrack = soundtrack;
-    if (soundtrack.dataset.floatingBound) return;
-    soundtrack.dataset.floatingBound = "true";
-    const sync = () => {
-      if (!floatingSoundtrack || floatingSoundtrack !== soundtrack) return;
-      const toggle = $("[data-soundtrack-toggle]", player);
-      const status = $("[data-soundtrack-status]", player);
-      toggle.setAttribute("aria-label", soundtrack.paused ? "Play soundtrack" : "Pause soundtrack");
-      toggle.innerHTML = `<i class="ph ${soundtrack.paused ? "ph-play" : "ph-pause"}" aria-hidden="true"></i>`;
-      status.textContent = soundtrack.paused ? `Paused · ${formatSoundtrackTime(Math.max(firstBirthdayMedia.songStartSeconds, soundtrack.currentTime || firstBirthdayMedia.songStartSeconds))}` : `${formatSoundtrackTime(Math.max(firstBirthdayMedia.songStartSeconds, soundtrack.currentTime || firstBirthdayMedia.songStartSeconds))} · 2:24–2:56`;
-    };
-    ["play", "pause", "timeupdate", "loadedmetadata"].forEach((eventName) => soundtrack.addEventListener(eventName, sync));
-    sync();
+  const spotifyPlaylistMarkup = (dark = false) => {
+    const embedUrl = spotifyEmbedUrl(config.SPOTIFY_PLAYLIST_URL);
+    if (embedUrl) return `<iframe class="spotify-embed${dark ? " spotify-embed-dark" : ""}" src="${embedUrl}" title="Marisa's birthday playlist" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
+    return `<div class="spotify-placeholder${dark ? " spotify-placeholder-dark" : ""}"><i class="ph ph-spotify-logo" aria-hidden="true"></i><div><strong>Marisa’s birthday playlist</strong><span>Add the Spotify playlist link in the site settings to show it here.</span></div><a class="text-link" href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer">Open Spotify <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></div>`;
   };
-  const ensurePersistentSoundtrack = () => {
-    const existing = getPageSoundtrack();
-    if (existing) { bindFloatingSoundtrack(existing); return existing; }
-    const player = createFloatingPlayer(true);
-    const soundtrack = $("[data-first-birthday-song]", player);
-    bindFloatingSoundtrack(soundtrack);
-    return soundtrack;
-  };
-  const setupBirthdaySoundtrack = (soundtrack, autoplay = false) => {
-    if (!soundtrack) return;
-    if (soundtrack.dataset.songReady) { if (autoplay) soundtrack.play().catch(() => {}); return; }
-    soundtrack.dataset.songReady = "true";
-    const start = Number(soundtrack.dataset.songStart) || firstBirthdayMedia.songStartSeconds;
-    const end = Number(soundtrack.dataset.songEnd) || firstBirthdayMedia.songEndSeconds;
-    const saved = readSoundtrackState();
-    const requestPlay = () => soundtrack.play().catch(() => { soundtrack.dataset.resumePending = "true"; });
-    const jumpToSong = () => {
-      const position = Number(saved.position);
-      const target = Number.isFinite(position) && position >= start && position < end && (!Number.isFinite(soundtrack.duration) || position < soundtrack.duration) ? position : start;
-      if (Number.isFinite(soundtrack.duration) && soundtrack.duration > 0 && soundtrack.duration <= target) return;
-      try { soundtrack.currentTime = target; } catch { /* metadata is still loading */ }
-    };
-    soundtrack.addEventListener("loadedmetadata", () => { jumpToSong(); if (autoplay || saved.playing) requestPlay(); });
-    soundtrack.addEventListener("play", () => { if (soundtrack.currentTime < start || soundtrack.currentTime >= end) jumpToSong(); soundtrack.dataset.resumePending = "false"; saveSoundtrackState(soundtrack, true); });
-    soundtrack.addEventListener("pause", () => { if (soundtrack.dataset.pageLeaving !== "true") saveSoundtrackState(soundtrack, false); });
-    soundtrack.addEventListener("timeupdate", () => { if (soundtrack.currentTime >= end - 0.08) { jumpToSong(); saveSoundtrackState(soundtrack, true); requestPlay(); } else saveSoundtrackState(soundtrack); });
-    soundtrack.addEventListener("ended", () => { jumpToSong(); saveSoundtrackState(soundtrack, true); requestPlay(); });
-    window.addEventListener("pagehide", () => { soundtrack.dataset.pageLeaving = "true"; if (!soundtrack.paused) saveSoundtrackState(soundtrack, true); }, { once: true });
-    bindFloatingSoundtrack(soundtrack);
-    if (soundtrack.readyState >= 1) { jumpToSong(); if (autoplay || saved.playing) requestPlay(); }
-  };
-  const setupMediaFocus = () => {
-    if (document.documentElement.dataset.mediaFocusReady) return;
-    document.documentElement.dataset.mediaFocusReady = "true";
-    document.addEventListener("play", (event) => {
-      const media = event.target;
-      if (media instanceof HTMLMediaElement && !media.matches("[data-first-birthday-song]")) pauseBirthdaySoundtracks();
-    }, true);
-    const resumePendingSoundtrack = () => $$('[data-first-birthday-song][data-resume-pending="true"]').forEach((soundtrack) => soundtrack.play().catch(() => {}));
-    document.addEventListener("pointerdown", resumePendingSoundtrack, true);
-    document.addEventListener("keydown", resumePendingSoundtrack, true);
-  };
+  const setupSpotifyPlaylist = () => $$('[data-spotify-playlist]').forEach((node) => { node.innerHTML = spotifyPlaylistMarkup(node.dataset.spotifyTheme === "dark"); });
   const sharedBase = config.FIREBASE_DATABASE_URL ? `${config.FIREBASE_DATABASE_URL.replace(/\/$/, "")}/birthday` : "";
   const sharedFetch = async (path, options = {}) => {
     if (!sharedBase) return null;
@@ -249,7 +175,7 @@
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">YOUR BONUS TRACKS</p><h2>Press<br /><em>play.</em></h2><p>Voice notes sound better when they are meant just for you.</p></div><div class="wrapped-voice-list">${voiceCards}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-soundtrack" data-wrapped-slide="7">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="none" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-soundtrack-audio"><div class="wrapped-voice-icon"><i class="ph ph-music-notes" aria-hidden="true"></i></div><strong>Press play for the song</strong><span>Plays from 2:24 to 2:56, then loops.</span><audio controls preload="none" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" data-song-end="${firstBirthdayMedia.songEndSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio></div></div>
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="none" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-spotify-card">${spotifyPlaylistMarkup(true)}</div></div>
         </article>
         <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="8">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN TWO ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
@@ -266,7 +192,6 @@
     const next = $(".wrapped-arrow-next", node);
     if (previous) previous.disabled = marisaWrappedSlide === 0;
     if (next) next.hidden = marisaWrappedSlide >= slides.length - 1;
-    setupBirthdaySoundtrack($("[data-first-birthday-song]", node), autoplay);
   };
 
   const setupMarisaWrapped = () => {
@@ -449,6 +374,7 @@
           const photo = allPhotos[(offset + index) % allPhotos.length];
           image.src = photo.src;
           image.alt = photo.alt;
+          image.style.objectPosition = photo.objectPosition || "50% 28%";
         });
         layout = (layout + 1) % layouts.length;
         collage.dataset.layout = layouts[layout];
@@ -487,8 +413,6 @@
       document.body.classList.add("is-marisa-mode");
       marisaView.hidden = false;
       renderMarisaWrapped({ autoplay: true });
-    } else {
-      setupBirthdaySoundtrack(ensurePersistentSoundtrack(), true);
     }
   };
 
@@ -630,7 +554,6 @@
     recordButton?.addEventListener("click", async () => {
       if (recorder?.state === "recording") { recorder.stop(); return; }
       if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) { setStatus("Voice recording is not supported in this browser. You can upload an audio file instead."); return; }
-      pauseBirthdaySoundtracks();
       try {
         recordingStream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const chunks = [];
@@ -865,5 +788,5 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading(); setupMediaFocus(); setupBirthdaySoundtrack(getPageSoundtrack());
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading(); setupSpotifyPlaylist();
 })();
