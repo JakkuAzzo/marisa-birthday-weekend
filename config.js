@@ -9,7 +9,6 @@ window.MARISA_CONFIG = {
   LIVE_RSVPS_URL: "rsvps.json",
   SHARED_CALENDAR_URL: "",
   MONZO_PAYMENT_URL: "https://monzo.me/nathanbrownbennett?h=sWJ2zY&account_type=personal",
-  SPOTIFY_PLAYLIST_URL: "https://open.spotify.com/playlist/5WHWJ5TZV1ig00Kz479xbi?si=6CsvxIYMQ8W3ak22Gn-38g&utm_source=copy-link&pi=p1D7ilYbSCy6m",
   contributionAmounts: {
     gift: 15
   }

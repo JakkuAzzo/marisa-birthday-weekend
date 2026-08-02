@@ -74,20 +74,6 @@
   const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
   const money = (value) => `£${Number(value).toFixed(2)}`;
   const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char]));
-  const spotifyEmbedUrl = (playlistUrl) => {
-    try {
-      const parsed = new URL(playlistUrl || "");
-      if (parsed.hostname !== "open.spotify.com") return "";
-      const match = parsed.pathname.match(/^\/playlist\/([A-Za-z0-9]+)$/);
-      return match ? `https://open.spotify.com/embed/playlist/${match[1]}?utm_source=generator&theme=0&autoplay=1` : "";
-    } catch { return ""; }
-  };
-  const spotifyPlaylistMarkup = (dark = false) => {
-    const embedUrl = spotifyEmbedUrl(config.SPOTIFY_PLAYLIST_URL);
-    if (embedUrl) return `<iframe class="spotify-embed${dark ? " spotify-embed-dark" : ""}" src="${embedUrl}" title="Marisa's birthday playlist" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>`;
-    return `<div class="spotify-placeholder${dark ? " spotify-placeholder-dark" : ""}"><i class="ph ph-spotify-logo" aria-hidden="true"></i><div><strong>Marisa’s birthday playlist</strong><span>Add the Spotify playlist link in the site settings to show it here.</span></div><a class="text-link" href="https://open.spotify.com/" target="_blank" rel="noopener noreferrer">Open Spotify <i class="ph ph-arrow-up-right" aria-hidden="true"></i></a></div>`;
-  };
-  const setupSpotifyPlaylist = () => $$('[data-spotify-playlist]').forEach((node) => { node.innerHTML = spotifyPlaylistMarkup(node.dataset.spotifyTheme === "dark"); });
   const sharedBase = config.FIREBASE_DATABASE_URL ? `${config.FIREBASE_DATABASE_URL.replace(/\/$/, "")}/birthday` : "";
   const sharedFetch = async (path, options = {}) => {
     if (!sharedBase) return null;
@@ -175,7 +161,7 @@
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">YOUR BONUS TRACKS</p><h2>Press<br /><em>play.</em></h2><p>Voice notes sound better when they are meant just for you.</p></div><div class="wrapped-voice-list">${voiceCards}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-soundtrack" data-wrapped-slide="7">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls autoplay muted preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-spotify-card">${spotifyPlaylistMarkup(true)}</div></div>
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls autoplay muted preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure></div>
         </article>
         <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="8">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN TWO ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
@@ -788,5 +774,5 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading(); setupSpotifyPlaylist();
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading();
 })();
