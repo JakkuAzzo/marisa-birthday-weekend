@@ -50,7 +50,8 @@
     video: "assets/media/marisa-first-birthday.mp4",
     audio: "assets/media/marisa-first-birthday-song.m4a",
     poster: "assets/photos/marisa-bouquet.jpeg",
-    songStartSeconds: 114
+    songStartSeconds: 144,
+    songEndSeconds: 176
   };
   const defaultAttendees = [
     { name: "Marisa", image: "assets/photos/marisa-roses.jpeg" },
@@ -79,7 +80,7 @@
   const soundtrackStateKey = "marisa-birthday-soundtrack-state";
   const readSoundtrackState = () => { try { return JSON.parse(sessionStorage.getItem(soundtrackStateKey) || "{}"); } catch { return {}; } };
   const writeSoundtrackState = (state) => { try { sessionStorage.setItem(soundtrackStateKey, JSON.stringify(state)); } catch { /* private browsing can disable storage */ } };
-  const saveSoundtrackState = (soundtrack, playing = !soundtrack.paused) => writeSoundtrackState({ position: Number.isFinite(soundtrack.currentTime) ? soundtrack.currentTime : 114, playing });
+  const saveSoundtrackState = (soundtrack, playing = !soundtrack.paused) => writeSoundtrackState({ position: Number.isFinite(soundtrack.currentTime) ? soundtrack.currentTime : firstBirthdayMedia.songStartSeconds, playing });
   const pauseBirthdaySoundtracks = () => $$('[data-first-birthday-song]').forEach((soundtrack) => { if (!soundtrack.paused) soundtrack.pause(); });
   const getPageSoundtrack = () => $$('[data-first-birthday-song]').find((soundtrack) => !soundtrack.closest('[data-marisa-wrapped]')) || null;
   let floatingSoundtrack = null;
@@ -87,14 +88,14 @@
   const formatSoundtrackTime = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
   const createFloatingPlayer = (includeAudio = false) => {
     if (floatingPlayer) {
-      if (includeAudio && !$("[data-first-birthday-song]", floatingPlayer)) floatingPlayer.insertAdjacentHTML("beforeend", `<audio controls preload="metadata" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio>`);
+      if (includeAudio && !$("[data-first-birthday-song]", floatingPlayer)) floatingPlayer.insertAdjacentHTML("beforeend", `<audio controls preload="metadata" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" data-song-end="${firstBirthdayMedia.songEndSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio>`);
       return floatingPlayer;
     }
     floatingPlayer = document.createElement("div");
     floatingPlayer.className = "persistent-soundtrack";
     floatingPlayer.dataset.floatingSoundtrack = "true";
     floatingPlayer.setAttribute("aria-label", "Birthday soundtrack player");
-    floatingPlayer.innerHTML = `<button class="soundtrack-toggle" type="button" data-soundtrack-toggle aria-label="Play soundtrack"><i class="ph ph-play" aria-hidden="true"></i></button><div class="soundtrack-player-copy"><strong>Marisa’s soundtrack</strong><span data-soundtrack-status>Starts at 1:54</span></div>${includeAudio ? `<audio controls preload="metadata" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio>` : ""}`;
+    floatingPlayer.innerHTML = `<button class="soundtrack-toggle" type="button" data-soundtrack-toggle aria-label="Play soundtrack"><i class="ph ph-play" aria-hidden="true"></i></button><div class="soundtrack-player-copy"><strong>Marisa’s soundtrack</strong><span data-soundtrack-status>2:24–2:56 loop</span></div>${includeAudio ? `<audio controls preload="metadata" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" data-song-end="${firstBirthdayMedia.songEndSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio>` : ""}`;
     document.body.append(floatingPlayer);
     $("[data-soundtrack-toggle]", floatingPlayer).addEventListener("click", () => {
       if (!floatingSoundtrack) return;
@@ -114,7 +115,7 @@
       const status = $("[data-soundtrack-status]", player);
       toggle.setAttribute("aria-label", soundtrack.paused ? "Play soundtrack" : "Pause soundtrack");
       toggle.innerHTML = `<i class="ph ${soundtrack.paused ? "ph-play" : "ph-pause"}" aria-hidden="true"></i>`;
-      status.textContent = soundtrack.paused ? `Paused · ${formatSoundtrackTime(Math.max(114, soundtrack.currentTime || 114))}` : formatSoundtrackTime(soundtrack.currentTime || 114);
+      status.textContent = soundtrack.paused ? `Paused · ${formatSoundtrackTime(Math.max(firstBirthdayMedia.songStartSeconds, soundtrack.currentTime || firstBirthdayMedia.songStartSeconds))}` : `${formatSoundtrackTime(Math.max(firstBirthdayMedia.songStartSeconds, soundtrack.currentTime || firstBirthdayMedia.songStartSeconds))} · 2:24–2:56`;
     };
     ["play", "pause", "timeupdate", "loadedmetadata"].forEach((eventName) => soundtrack.addEventListener(eventName, sync));
     sync();
@@ -131,23 +132,24 @@
     if (!soundtrack) return;
     if (soundtrack.dataset.songReady) { if (autoplay) soundtrack.play().catch(() => {}); return; }
     soundtrack.dataset.songReady = "true";
-    const start = Number(soundtrack.dataset.songStart) || 114;
+    const start = Number(soundtrack.dataset.songStart) || firstBirthdayMedia.songStartSeconds;
+    const end = Number(soundtrack.dataset.songEnd) || firstBirthdayMedia.songEndSeconds;
     const saved = readSoundtrackState();
     const requestPlay = () => soundtrack.play().catch(() => { soundtrack.dataset.resumePending = "true"; });
     const jumpToSong = () => {
       const position = Number(saved.position);
-      const target = Number.isFinite(position) && position >= start && (!Number.isFinite(soundtrack.duration) || position < soundtrack.duration) ? position : start;
-      if (Number.isFinite(soundtrack.duration) && soundtrack.duration <= target) return;
+      const target = Number.isFinite(position) && position >= start && position < end && (!Number.isFinite(soundtrack.duration) || position < soundtrack.duration) ? position : start;
+      if (Number.isFinite(soundtrack.duration) && soundtrack.duration > 0 && soundtrack.duration <= target) return;
       try { soundtrack.currentTime = target; } catch { /* metadata is still loading */ }
     };
     soundtrack.addEventListener("loadedmetadata", () => { jumpToSong(); if (autoplay || saved.playing) requestPlay(); });
-    soundtrack.addEventListener("play", () => { if (soundtrack.currentTime < start || soundtrack.currentTime >= soundtrack.duration) jumpToSong(); soundtrack.dataset.resumePending = "false"; saveSoundtrackState(soundtrack, true); });
+    soundtrack.addEventListener("play", () => { if (soundtrack.currentTime < start || soundtrack.currentTime >= end) jumpToSong(); soundtrack.dataset.resumePending = "false"; saveSoundtrackState(soundtrack, true); });
     soundtrack.addEventListener("pause", () => { if (soundtrack.dataset.pageLeaving !== "true") saveSoundtrackState(soundtrack, false); });
-    soundtrack.addEventListener("timeupdate", () => { saveSoundtrackState(soundtrack); if (Number.isFinite(soundtrack.duration) && soundtrack.currentTime >= soundtrack.duration - 0.08) { jumpToSong(); requestPlay(); } });
+    soundtrack.addEventListener("timeupdate", () => { if (soundtrack.currentTime >= end - 0.08) { jumpToSong(); saveSoundtrackState(soundtrack, true); requestPlay(); } else saveSoundtrackState(soundtrack); });
     soundtrack.addEventListener("ended", () => { jumpToSong(); saveSoundtrackState(soundtrack, true); requestPlay(); });
     window.addEventListener("pagehide", () => { soundtrack.dataset.pageLeaving = "true"; if (!soundtrack.paused) saveSoundtrackState(soundtrack, true); }, { once: true });
     bindFloatingSoundtrack(soundtrack);
-    if (autoplay && soundtrack.readyState >= 1) requestPlay();
+    if (soundtrack.readyState >= 1) { jumpToSong(); if (autoplay || saved.playing) requestPlay(); }
   };
   const setupMediaFocus = () => {
     if (document.documentElement.dataset.mediaFocusReady) return;
@@ -247,7 +249,7 @@
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">YOUR BONUS TRACKS</p><h2>Press<br /><em>play.</em></h2><p>Voice notes sound better when they are meant just for you.</p></div><div class="wrapped-voice-list">${voiceCards}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-soundtrack" data-wrapped-slide="7">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-soundtrack-audio"><div class="wrapped-voice-icon"><i class="ph ph-music-notes" aria-hidden="true"></i></div><strong>Press play for the song</strong><span>The song starts at 1:54 and loops from there.</span><audio controls preload="none" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio></div></div>
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-soundtrack-audio"><div class="wrapped-voice-icon"><i class="ph ph-music-notes" aria-hidden="true"></i></div><strong>Press play for the song</strong><span>Plays from 2:24 to 2:56, then loops.</span><audio controls preload="none" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" data-song-end="${firstBirthdayMedia.songEndSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio></div></div>
         </article>
         <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="8">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN TWO ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
