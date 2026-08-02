@@ -11,7 +11,7 @@ A static GitHub Pages event hub for Marisa's birthday weekend, 21–24 August 20
 - refreshable confirmed RSVP count from `rsvps.json` (no assumed attendees are seeded)
 - local RSVP and message persistence in the browser
 - downloadable weekend calendar (`.ics`)
-- contribution selector for boat hire, cinema, accommodation and gift fund
+- contribution selector for boat hire, cinema and gift fund
 - Monzo payment link with a post-payment name, amount and reference report
 - image/video/voice-note/message uploader and paged memory carousel
 - microphone recording plus direct photo/video capture controls where the browser supports them
