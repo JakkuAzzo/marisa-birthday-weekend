@@ -389,6 +389,13 @@ code { padding: 2px 4px; background: rgba(50, 20, 38, .08); }
 .soundtrack-video-card figcaption { display: grid; gap: 5px; padding: 13px 4px 0; color: var(--aubergine); }
 .soundtrack-video-card figcaption span { color: var(--coral-dark); font-size: 10px; font-weight: 700; letter-spacing: .2em; }
 .soundtrack-video-card figcaption strong { font-family: var(--script); font-size: 24px; font-weight: 500; }
+.is-gated .persistent-soundtrack { display: none; }
+.persistent-soundtrack { position: fixed; z-index: 18; right: 18px; bottom: 18px; display: grid; grid-template-columns: 40px 1fr; align-items: center; gap: 10px; width: min(250px, calc(100vw - 36px)); padding: 10px 12px; border: 1px solid rgba(244, 234, 217, .25); border-radius: 999px; background: rgba(42, 18, 48, .95); color: var(--cream); box-shadow: 0 12px 32px rgba(50, 20, 38, .22); }
+.soundtrack-toggle { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--coral); color: var(--aubergine); font-size: 17px; }
+.soundtrack-player-copy { display: grid; gap: 2px; min-width: 0; }
+.soundtrack-player-copy strong { overflow: hidden; color: var(--cream); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.soundtrack-player-copy span { color: rgba(244, 234, 217, .68); font-size: 11px; }
+.persistent-soundtrack audio { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 
 @media (max-width: 1100px) {
   .hero { grid-template-columns: minmax(320px, .8fr) minmax(420px, 1.2fr); gap: 4vw; padding-inline: 7vw; }

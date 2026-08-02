@@ -76,21 +76,78 @@
   const write = (key, value) => localStorage.setItem(key, JSON.stringify(value));
   const money = (value) => `£${Number(value).toFixed(2)}`;
   const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "'": "&#039;", '"': "&quot;" }[char]));
+  const soundtrackStateKey = "marisa-birthday-soundtrack-state";
+  const readSoundtrackState = () => { try { return JSON.parse(sessionStorage.getItem(soundtrackStateKey) || "{}"); } catch { return {}; } };
+  const writeSoundtrackState = (state) => { try { sessionStorage.setItem(soundtrackStateKey, JSON.stringify(state)); } catch { /* private browsing can disable storage */ } };
+  const saveSoundtrackState = (soundtrack, playing = !soundtrack.paused) => writeSoundtrackState({ position: Number.isFinite(soundtrack.currentTime) ? soundtrack.currentTime : 114, playing });
   const pauseBirthdaySoundtracks = () => $$('[data-first-birthday-song]').forEach((soundtrack) => { if (!soundtrack.paused) soundtrack.pause(); });
+  const getPageSoundtrack = () => $$('[data-first-birthday-song]').find((soundtrack) => !soundtrack.closest('[data-marisa-wrapped]')) || null;
+  let floatingSoundtrack = null;
+  let floatingPlayer = null;
+  const formatSoundtrackTime = (seconds) => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+  const createFloatingPlayer = (includeAudio = false) => {
+    if (floatingPlayer) {
+      if (includeAudio && !$("[data-first-birthday-song]", floatingPlayer)) floatingPlayer.insertAdjacentHTML("beforeend", `<audio controls preload="metadata" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio>`);
+      return floatingPlayer;
+    }
+    floatingPlayer = document.createElement("div");
+    floatingPlayer.className = "persistent-soundtrack";
+    floatingPlayer.dataset.floatingSoundtrack = "true";
+    floatingPlayer.setAttribute("aria-label", "Birthday soundtrack player");
+    floatingPlayer.innerHTML = `<button class="soundtrack-toggle" type="button" data-soundtrack-toggle aria-label="Play soundtrack"><i class="ph ph-play" aria-hidden="true"></i></button><div class="soundtrack-player-copy"><strong>Marisa’s soundtrack</strong><span data-soundtrack-status>Starts at 1:54</span></div>${includeAudio ? `<audio controls preload="metadata" data-first-birthday-song data-song-start="${firstBirthdayMedia.songStartSeconds}" src="${firstBirthdayMedia.audio}" aria-label="Marisa's first birthday soundtrack"></audio>` : ""}`;
+    document.body.append(floatingPlayer);
+    $("[data-soundtrack-toggle]", floatingPlayer).addEventListener("click", () => {
+      if (!floatingSoundtrack) return;
+      if (floatingSoundtrack.paused) floatingSoundtrack.play().catch(() => {}); else floatingSoundtrack.pause();
+    });
+    return floatingPlayer;
+  };
+  const bindFloatingSoundtrack = (soundtrack) => {
+    if (!soundtrack) return;
+    const player = createFloatingPlayer();
+    floatingSoundtrack = soundtrack;
+    if (soundtrack.dataset.floatingBound) return;
+    soundtrack.dataset.floatingBound = "true";
+    const sync = () => {
+      if (!floatingSoundtrack || floatingSoundtrack !== soundtrack) return;
+      const toggle = $("[data-soundtrack-toggle]", player);
+      const status = $("[data-soundtrack-status]", player);
+      toggle.setAttribute("aria-label", soundtrack.paused ? "Play soundtrack" : "Pause soundtrack");
+      toggle.innerHTML = `<i class="ph ${soundtrack.paused ? "ph-play" : "ph-pause"}" aria-hidden="true"></i>`;
+      status.textContent = soundtrack.paused ? `Paused · ${formatSoundtrackTime(Math.max(114, soundtrack.currentTime || 114))}` : formatSoundtrackTime(soundtrack.currentTime || 114);
+    };
+    ["play", "pause", "timeupdate", "loadedmetadata"].forEach((eventName) => soundtrack.addEventListener(eventName, sync));
+    sync();
+  };
+  const ensurePersistentSoundtrack = () => {
+    const existing = getPageSoundtrack();
+    if (existing) { bindFloatingSoundtrack(existing); return existing; }
+    const player = createFloatingPlayer(true);
+    const soundtrack = $("[data-first-birthday-song]", player);
+    bindFloatingSoundtrack(soundtrack);
+    return soundtrack;
+  };
   const setupBirthdaySoundtrack = (soundtrack, autoplay = false) => {
     if (!soundtrack) return;
     if (soundtrack.dataset.songReady) { if (autoplay) soundtrack.play().catch(() => {}); return; }
     soundtrack.dataset.songReady = "true";
     const start = Number(soundtrack.dataset.songStart) || 114;
+    const saved = readSoundtrackState();
+    const requestPlay = () => soundtrack.play().catch(() => { soundtrack.dataset.resumePending = "true"; });
     const jumpToSong = () => {
-      if (Number.isFinite(soundtrack.duration) && soundtrack.duration <= start) return;
-      try { soundtrack.currentTime = start; } catch { /* metadata is still loading */ }
+      const position = Number(saved.position);
+      const target = Number.isFinite(position) && position >= start && (!Number.isFinite(soundtrack.duration) || position < soundtrack.duration) ? position : start;
+      if (Number.isFinite(soundtrack.duration) && soundtrack.duration <= target) return;
+      try { soundtrack.currentTime = target; } catch { /* metadata is still loading */ }
     };
-    soundtrack.addEventListener("loadedmetadata", jumpToSong);
-    soundtrack.addEventListener("play", () => { if (soundtrack.currentTime < start || soundtrack.currentTime >= soundtrack.duration) jumpToSong(); });
-    soundtrack.addEventListener("timeupdate", () => { if (Number.isFinite(soundtrack.duration) && soundtrack.currentTime >= soundtrack.duration - 0.08) { jumpToSong(); soundtrack.play().catch(() => {}); } });
-    soundtrack.addEventListener("ended", () => { jumpToSong(); soundtrack.play().catch(() => {}); });
-    if (autoplay) soundtrack.play().catch(() => {});
+    soundtrack.addEventListener("loadedmetadata", () => { jumpToSong(); if (autoplay || saved.playing) requestPlay(); });
+    soundtrack.addEventListener("play", () => { if (soundtrack.currentTime < start || soundtrack.currentTime >= soundtrack.duration) jumpToSong(); soundtrack.dataset.resumePending = "false"; saveSoundtrackState(soundtrack, true); });
+    soundtrack.addEventListener("pause", () => { if (soundtrack.dataset.pageLeaving !== "true") saveSoundtrackState(soundtrack, false); });
+    soundtrack.addEventListener("timeupdate", () => { saveSoundtrackState(soundtrack); if (Number.isFinite(soundtrack.duration) && soundtrack.currentTime >= soundtrack.duration - 0.08) { jumpToSong(); requestPlay(); } });
+    soundtrack.addEventListener("ended", () => { jumpToSong(); saveSoundtrackState(soundtrack, true); requestPlay(); });
+    window.addEventListener("pagehide", () => { soundtrack.dataset.pageLeaving = "true"; if (!soundtrack.paused) saveSoundtrackState(soundtrack, true); }, { once: true });
+    bindFloatingSoundtrack(soundtrack);
+    if (autoplay && soundtrack.readyState >= 1) requestPlay();
   };
   const setupMediaFocus = () => {
     if (document.documentElement.dataset.mediaFocusReady) return;
@@ -99,6 +156,9 @@
       const media = event.target;
       if (media instanceof HTMLMediaElement && !media.matches("[data-first-birthday-song]")) pauseBirthdaySoundtracks();
     }, true);
+    const resumePendingSoundtrack = () => $$('[data-first-birthday-song][data-resume-pending="true"]').forEach((soundtrack) => soundtrack.play().catch(() => {}));
+    document.addEventListener("pointerdown", resumePendingSoundtrack, true);
+    document.addEventListener("keydown", resumePendingSoundtrack, true);
   };
   const sharedBase = config.FIREBASE_DATABASE_URL ? `${config.FIREBASE_DATABASE_URL.replace(/\/$/, "")}/birthday` : "";
   const sharedFetch = async (path, options = {}) => {
@@ -427,7 +487,7 @@
       marisaView.hidden = false;
       renderMarisaWrapped({ autoplay: true });
     } else {
-      setupBirthdaySoundtrack($("[data-first-birthday-song]"), true);
+      setupBirthdaySoundtrack(ensurePersistentSoundtrack(), true);
     }
   };
 
@@ -795,5 +855,5 @@
     });
   };
 
-  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading(); setupMediaFocus(); setupBirthdaySoundtrack($("[data-first-birthday-song]"));
+  renderAttendees(); renderContributions(); updatePaymentTotals(); renderMemories(); loadLiveRsvps(); loadSharedData(); setupMarisaWrapped(); setupGate(); setupCountdown(); setupPhotoRail(); setupMenu(); setupReveals(); setupRsvp(); setupNotes(); setupMemoryForm(); setupMemoryCarousel(); setupPayments(); setupCalendar(); setupItineraryPopups(); setupNavHighlight(); setupSectionPosters(); setupImageLoading(); setupMediaFocus(); setupBirthdaySoundtrack(getPageSoundtrack());
 })();
