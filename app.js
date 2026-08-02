@@ -79,7 +79,7 @@
       const parsed = new URL(playlistUrl || "");
       if (parsed.hostname !== "open.spotify.com") return "";
       const match = parsed.pathname.match(/^\/playlist\/([A-Za-z0-9]+)$/);
-      return match ? `https://open.spotify.com/embed/playlist/${match[1]}?utm_source=generator&theme=0` : "";
+      return match ? `https://open.spotify.com/embed/playlist/${match[1]}?utm_source=generator&theme=0&autoplay=1` : "";
     } catch { return ""; }
   };
   const spotifyPlaylistMarkup = (dark = false) => {
@@ -175,7 +175,7 @@
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">YOUR BONUS TRACKS</p><h2>Press<br /><em>play.</em></h2><p>Voice notes sound better when they are meant just for you.</p></div><div class="wrapped-voice-list">${voiceCards}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-soundtrack" data-wrapped-slide="7">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls preload="none" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-spotify-card">${spotifyPlaylistMarkup(true)}</div></div>
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls autoplay muted preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure><div class="wrapped-spotify-card">${spotifyPlaylistMarkup(true)}</div></div>
         </article>
         <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="8">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN TWO ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
