@@ -139,7 +139,7 @@
     const archiveChapterOne = archivePhotos.slice(0, 6);
     const archiveChapterTwo = archivePhotos.slice(6, 12);
     const itinerary = [
-      { date: "FRI · 21 AUG", label: "Main birthday day", items: [["11:00", "Meet in Stratford", "The Breakfast Club Stratford"], ["12:00", "The Breakfast Club reservation", "The Breakfast Club Stratford"], ["13:30–14:30", "Travel to Sutton", "Sutton"], ["14:30–18:00", "Park picnic near the hotel", "Sutton park · indoor backup if raining"], ["18:00", "Hotel check-in + reset", "Sutton"], ["19:00", "Cake, food, gifts + games", "Sutton"]] },
+      { date: "FRI · 21 AUG", label: "Main birthday day", items: [["11:00", "Meet in Stratford", "The Breakfast Club Stratford"], ["12:00", "The Breakfast Club reservation", "The Breakfast Club Stratford"], ["13:30–14:30", "Travel to Sutton", "Sutton"], ["14:30–18:00", "Park picnic in Sutton", "Sutton park · indoor backup if raining"], ["18:00", "Settle in + reset", "Sutton"], ["19:00", "Cake, food, gifts + games", "Sutton"]] },
       { date: "SAT · 22 AUG", label: "Kingston pub & night out", items: [["16:00", "Pub or restaurant meet", "Kingston upon Thames"], ["20:00", "Night out", "Location to be confirmed"]] }
     ];
     const itineraryCards = itinerary.map((day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`).join("");
@@ -326,8 +326,8 @@
     ["20260821T110000", "20260821T120000", "Meet in Stratford", "Arrive near The Breakfast Club Stratford before the reservation"],
     ["20260821T120000", "20260821T133000", "The Breakfast Club reservation", "The Breakfast Club Stratford · party of six"],
     ["20260821T133000", "20260821T143000", "Travel to Sutton", "Head to Sutton after breakfast"],
-    ["20260821T143000", "20260821T180000", "Park picnic near the hotel", "Sutton park · indoor backup if raining"],
-    ["20260821T180000", "20260821T190000", "Hotel check-in + reset", "Sutton"],
+    ["20260821T143000", "20260821T180000", "Park picnic in Sutton", "Sutton park · indoor backup if raining"],
+    ["20260821T180000", "20260821T190000", "Settle in + reset", "Sutton"],
     ["20260821T190000", "20260821T230000", "Cake, food, gifts + games", "Sutton"],
     ["20260822T160000", "20260822T180000", "Pub or restaurant meet", "Kingston upon Thames"],
     ["20260822T200000", "20260822T235900", "Night out", "Kingston upon Thames · location to be confirmed"],
@@ -1011,8 +1011,8 @@
         { time: "11:00–12:00", title: "Meet in Stratford", location: "The Breakfast Club Stratford", directions: "https://www.google.com/maps/search/?api=1&query=The+Breakfast+Club+Stratford+London" },
         { time: "12:00–13:30", title: "The Breakfast Club reservation", location: "The Breakfast Club Stratford · party of six", directions: "https://www.google.com/maps/search/?api=1&query=The+Breakfast+Club+Stratford+London" },
         { time: "13:30–14:30", title: "Travel to Sutton", location: "Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+London" },
-        { time: "14:30–18:00", title: "Park picnic near the hotel", location: "Sutton park · indoor backup if raining", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+parks+London" },
-        { time: "18:00–19:00", title: "Hotel check-in + reset", location: "Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+London" },
+        { time: "14:30–18:00", title: "Park picnic in Sutton", location: "Sutton park · indoor backup if raining", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+parks+London" },
+        { time: "18:00–19:00", title: "Settle in + reset", location: "Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+London" },
         { time: "19:00–23:00", title: "Cake, food, gifts + games", location: "Sutton" }
       ] },
       { day: "Saturday 22 August", label: "Kingston pub & night out", date: "SAT · 22 AUG", items: [
