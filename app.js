@@ -30,7 +30,7 @@
     ["marisa-profile.jpeg", "Looking out", "Marisa looking into the distance"],
     ["marisa-dinner.jpeg", "Dinner plans", "Marisa at a restaurant"],
     ["group-table-portrait.jpeg", "All together", "Family and friends around a table"],
-    ["friends-hotel.jpeg", "Hotel laughs", "Friends laughing together indoors"],
+    ["friends-hotel.jpeg", "Stay laughs", "Friends laughing together indoors"],
     ["marisa-hat.jpeg", "Hat moment", "Marisa posing in a sun hat"],
     ["marisa-evening-city.jpeg", "City lights", "Marisa by the river at dusk"],
     ["marisa-gold-dress.jpeg", "Golden glow", "Marisa in a gold dress"],
