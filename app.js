@@ -139,7 +139,7 @@
     const archiveChapterOne = archivePhotos.slice(0, 6);
     const archiveChapterTwo = archivePhotos.slice(6, 12);
     const itinerary = [
-      { date: "FRI · 21 AUG", label: "Main birthday day", items: [["09:00", "The Breakfast Club", "Here East, Queen Elizabeth Olympic Park, Hackney Wick"], ["12:00–13:30", "Park picnic + drinks", "Queen Elizabeth Olympic Park · indoor backup if raining"], ["14:00", "Travel to Sutton + hotel check-in", "Sutton"], ["19:00", "Cake, food, gifts + games", "Sutton"]] },
+      { date: "FRI · 21 AUG", label: "Main birthday day", items: [["11:00", "Meet in Stratford", "The Breakfast Club Stratford"], ["12:00", "The Breakfast Club reservation", "The Breakfast Club Stratford"], ["13:30–14:30", "Travel to Sutton", "Sutton"], ["14:30–18:00", "Park picnic near the hotel", "Sutton park · indoor backup if raining"], ["18:00", "Hotel check-in + reset", "Sutton"], ["19:00", "Cake, food, gifts + games", "Sutton"]] },
       { date: "SAT · 22 AUG", label: "Kingston pub & night out", items: [["16:00", "Pub or restaurant meet", "Kingston upon Thames"], ["20:00", "Night out", "Location to be confirmed"]] }
     ];
     const itineraryCards = itinerary.map((day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`).join("");
@@ -323,9 +323,11 @@
   };
 
   const calendarEvents = [
-    ["20260821T090000", "20260821T120000", "The Breakfast Club", "Marisa's birthday weekend"],
-    ["20260821T120000", "20260821T133000", "Park picnic + drinks", "Queen Elizabeth Olympic Park · indoor backup if raining"],
-    ["20260821T140000", "20260821T150000", "Travel to Sutton + hotel check-in", "Allow time to travel from the park and check in"],
+    ["20260821T110000", "20260821T120000", "Meet in Stratford", "Arrive near The Breakfast Club Stratford before the reservation"],
+    ["20260821T120000", "20260821T133000", "The Breakfast Club reservation", "The Breakfast Club Stratford · party of six"],
+    ["20260821T133000", "20260821T143000", "Travel to Sutton", "Head to Sutton after breakfast"],
+    ["20260821T143000", "20260821T180000", "Park picnic near the hotel", "Sutton park · indoor backup if raining"],
+    ["20260821T180000", "20260821T190000", "Hotel check-in + reset", "Sutton"],
     ["20260821T190000", "20260821T230000", "Cake, food, gifts + games", "Sutton"],
     ["20260822T160000", "20260822T180000", "Pub or restaurant meet", "Kingston upon Thames"],
     ["20260822T200000", "20260822T235900", "Night out", "Kingston upon Thames · location to be confirmed"],
@@ -346,7 +348,7 @@
   };
 
   const setupCountdown = () => {
-    const target = new Date("2026-08-21T09:00:00+01:00").getTime();
+    const target = new Date("2026-08-21T11:00:00+01:00").getTime();
     const node = $("[data-countdown]");
     if (!node) return;
     const update = () => {
@@ -1006,9 +1008,11 @@
     if (!cards.length || $("[data-itinerary-modal]")) return;
     const itineraries = [
       { day: "Friday 21 August", label: "Main birthday day", date: "FRI · 21 AUG", items: [
-        { time: "09:00–12:00", title: "The Breakfast Club", location: "Here East, Queen Elizabeth Olympic Park, Hackney Wick", directions: "https://www.google.com/maps/search/?api=1&query=The+Breakfast+Club+Here+East+Hackney+Wick" },
-        { time: "12:00–13:30", title: "Park picnic + drinks", location: "Queen Elizabeth Olympic Park · indoor backup if raining", directions: "https://www.google.com/maps/search/?api=1&query=Queen+Elizabeth+Olympic+Park" },
-        { time: "14:00–15:00", title: "Travel to Sutton + hotel check-in", location: "Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+London" },
+        { time: "11:00–12:00", title: "Meet in Stratford", location: "The Breakfast Club Stratford", directions: "https://www.google.com/maps/search/?api=1&query=The+Breakfast+Club+Stratford+London" },
+        { time: "12:00–13:30", title: "The Breakfast Club reservation", location: "The Breakfast Club Stratford · party of six", directions: "https://www.google.com/maps/search/?api=1&query=The+Breakfast+Club+Stratford+London" },
+        { time: "13:30–14:30", title: "Travel to Sutton", location: "Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+London" },
+        { time: "14:30–18:00", title: "Park picnic near the hotel", location: "Sutton park · indoor backup if raining", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+parks+London" },
+        { time: "18:00–19:00", title: "Hotel check-in + reset", location: "Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+London" },
         { time: "19:00–23:00", title: "Cake, food, gifts + games", location: "Sutton" }
       ] },
       { day: "Saturday 22 August", label: "Kingston pub & night out", date: "SAT · 22 AUG", items: [
