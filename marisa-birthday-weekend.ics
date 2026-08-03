@@ -6,29 +6,45 @@ METHOD:PUBLISH
 BEGIN:VEVENT
 UID:marisa-birthday-0@birthday
 DTSTAMP:20260801T120000Z
-DTSTART;TZID=Europe/London:20260821T090000
+DTSTART;TZID=Europe/London:20260821T110000
 DTEND;TZID=Europe/London:20260821T120000
-SUMMARY:The Breakfast Club
-DESCRIPTION:Marisa's birthday weekend
+SUMMARY:Meet in Stratford
+DESCRIPTION:Arrive near The Breakfast Club Stratford before the reservation
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-1@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260821T120000
 DTEND;TZID=Europe/London:20260821T133000
-SUMMARY:Park picnic + drinks
-DESCRIPTION:Queen Elizabeth Olympic Park - indoor backup if raining
+SUMMARY:The Breakfast Club reservation
+DESCRIPTION:The Breakfast Club Stratford - party of six
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-2@birthday
 DTSTAMP:20260801T120000Z
-DTSTART;TZID=Europe/London:20260821T140000
-DTEND;TZID=Europe/London:20260821T150000
-SUMMARY:Travel to Sutton + hotel check-in
-DESCRIPTION:Allow time to travel from the park and check in
+DTSTART;TZID=Europe/London:20260821T133000
+DTEND;TZID=Europe/London:20260821T143000
+SUMMARY:Travel to Sutton
+DESCRIPTION:Head to Sutton after breakfast
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-3@birthday
+DTSTAMP:20260801T120000Z
+DTSTART;TZID=Europe/London:20260821T143000
+DTEND;TZID=Europe/London:20260821T180000
+SUMMARY:Park picnic near the hotel
+DESCRIPTION:Sutton park - indoor backup if raining
+END:VEVENT
+BEGIN:VEVENT
+UID:marisa-birthday-4@birthday
+DTSTAMP:20260801T120000Z
+DTSTART;TZID=Europe/London:20260821T180000
+DTEND;TZID=Europe/London:20260821T190000
+SUMMARY:Hotel check-in + reset
+DESCRIPTION:Sutton
+END:VEVENT
+BEGIN:VEVENT
+UID:marisa-birthday-5@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260821T190000
 DTEND;TZID=Europe/London:20260821T230000
@@ -36,7 +52,7 @@ SUMMARY:Cake, food, gifts + games
 DESCRIPTION:Sutton
 END:VEVENT
 BEGIN:VEVENT
-UID:marisa-birthday-4@birthday
+UID:marisa-birthday-6@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260822T160000
 DTEND;TZID=Europe/London:20260822T180000
@@ -44,7 +60,7 @@ SUMMARY:Pub or restaurant meet
 DESCRIPTION:Kingston upon Thames
 END:VEVENT
 BEGIN:VEVENT
-UID:marisa-birthday-5@birthday
+UID:marisa-birthday-7@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260822T200000
 DTEND;TZID=Europe/London:20260822T235900
@@ -52,7 +68,7 @@ SUMMARY:Night out
 DESCRIPTION:Kingston upon Thames - location to be confirmed
 END:VEVENT
 BEGIN:VEVENT
-UID:marisa-birthday-6@birthday
+UID:marisa-birthday-8@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260824T100000
 DTEND;TZID=Europe/London:20260824T120000
