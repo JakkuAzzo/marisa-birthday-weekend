@@ -479,6 +479,7 @@
     const gates = [];
     let state = "ready";
     let score = 0;
+    let lastRunScore = 0;
     let best = Number(read("marisa-party-best", 0)) || 0;
     let frameId = 0;
     let lastFrame = 0;
@@ -562,15 +563,16 @@
       if (nextState === "over") statusNode.textContent = `You scored ${score}. Give it another go for Marisa ✦`;
     };
     const reset = () => {
-      gates.length = 0; score = 0; scoreNode.textContent = "0"; bird.y = 240; bird.velocity = 0; photoIndex = 0;
+      gates.length = 0; score = 0; lastRunScore = 0; scoreNode.textContent = "0"; bird.y = 240; bird.velocity = 0; photoIndex = 0;
       const saveButton = $("button[type=submit]", resultsForm);
       nameInput.value = ""; saveButton.textContent = "Save score"; saveButton.disabled = false; saveStatusNode.textContent = "";
       for (let index = 0; index < 4; index += 1) gates.push({ x: 560 + index * 250, topHeight: 80 + Math.random() * 150, gap: 170, photo: index % obstacleImages.length, counted: false });
       setState("ready"); draw();
     };
     const endGame = () => {
+      lastRunScore = score;
       setState("over");
-      finalScoreNode.textContent = score;
+      finalScoreNode.textContent = lastRunScore;
       saveStatusNode.textContent = "";
       resultsForm.hidden = false;
       if (score > best) { best = score; bestNode.textContent = best; write("marisa-party-best", best); }
@@ -630,10 +632,13 @@
       event.preventDefault();
       const name = nameInput.value.trim().slice(0, 24);
       if (!name) { saveStatusNode.textContent = "Add your name first."; nameInput.focus(); return; }
-      const entry = { id: `score-${Date.now()}-${Math.random().toString(16).slice(2)}`, name, score, createdAt: new Date().toISOString() };
+      const scoreToSave = Math.max(Number(lastRunScore) || 0, Number(best) || 0);
+      finalScoreNode.textContent = scoreToSave;
+      if (scoreToSave <= 0) { saveStatusNode.textContent = "Play a round first, then save your score."; return; }
+      const entry = { id: `score-${Date.now()}-${Math.random().toString(16).slice(2)}`, name, score: scoreToSave, createdAt: new Date().toISOString() };
       const localEntries = read(leaderboardKey, []);
       const previousBest = localEntries.find((candidate) => String(candidate.name || "").trim().toLowerCase() === name.toLowerCase());
-      const personalBest = !previousBest || score > Number(previousBest.score);
+      const personalBest = !previousBest || scoreToSave > Number(previousBest.score);
       write(leaderboardKey, sortLeaderboard([...localEntries, entry]));
       leaderboard = sortLeaderboard([...leaderboard, entry]);
       renderLeaderboard();
@@ -643,8 +648,10 @@
       let synced = false;
       if (sharedBase && personalBest) { try { synced = await pushShared("leaderboard", entry); } catch { /* local best remains saved */ } }
       resultsForm.hidden = false;
-      if (synced) saveStatusNode.textContent = "New personal best saved to the shared leaderboard.";
-      else if (personalBest) saveStatusNode.textContent = "New personal best saved on this device.";
+      if (synced) {
+        saveStatusNode.textContent = "New personal best saved to the shared leaderboard.";
+        await loadLeaderboard();
+      } else if (personalBest) saveStatusNode.textContent = "New personal best saved on this device — shared sync was unavailable.";
       else saveStatusNode.textContent = "Your higher score is already saved on this device.";
       saveButton.textContent = "Saved";
     });
