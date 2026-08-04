@@ -72,6 +72,7 @@
   let liveRsvps = [];
   let sharedNotes = [];
   let sharedMedia = [];
+  let sharedLeaderboard = [];
   let memoryPage = 0;
   let marisaWrappedSlide = 0;
   let marisaWrappedMode = false;
@@ -101,7 +102,32 @@
     const response = await sharedFetch(collection, { method: "POST", body: JSON.stringify({ ...item, access: config.FIREBASE_ACCESS_KEY }) });
     return Boolean(response?.name);
   };
-  const mergeShared = (shared, local) => [...shared, ...local.filter((item) => !shared.some((remote) => remote.createdAt && remote.createdAt === item.createdAt && remote.name === item.name))];
+  const mergeShared = (shared, local) => [...shared, ...local.filter((item) => !shared.some((remote) => remote.createdAt && remote.name === item.name))];
+  const memoryFingerprint = (item) => {
+    const type = item.type || "message";
+    const name = String(item.name || "").trim().toLowerCase();
+    const body = String(item.body || item.text || item.caption || "").trim();
+    const url = String(item.url || "").trim();
+    return type === "message" ? ["message", name, body, String(item.mood || "").trim().toLowerCase()].join("|") : ["media", name, type, body, url].join("|");
+  };
+  const dedupeMemoryItems = (items) => {
+    const seen = new Set();
+    return items.filter((item) => {
+      const key = memoryFingerprint(item);
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+  const rankGameScores = (entries) => {
+    const highestByPlayer = new Map();
+    entries.filter((entry) => entry && String(entry.name || "").trim() && Number.isFinite(Number(entry.score))).forEach((entry) => {
+      const key = String(entry.name).trim().toLowerCase();
+      const current = highestByPlayer.get(key);
+      if (!current || Number(entry.score) > Number(current.score)) highestByPlayer.set(key, { ...entry, name: String(entry.name).trim() });
+    });
+    return [...highestByPlayer.values()].sort((a, b) => Number(b.score) - Number(a.score)).slice(0, 10);
+  };
 
   const getWrappedData = () => {
     const localRsvps = read(storageKeys.rsvps, []);
@@ -110,8 +136,8 @@
       list.push(person);
       return list;
     }, []);
-    const notes = mergeShared(sharedNotes, read(storageKeys.notes, [])).map((note) => ({ ...note, type: "message", text: note.body || note.caption }));
-    const media = mergeShared(sharedMedia, read(storageKeys.media, [])).map((item) => ({ ...item, text: item.caption }));
+    const notes = dedupeMemoryItems(mergeShared(sharedNotes, read(storageKeys.notes, [])).map((note) => ({ ...note, type: "message", text: note.body || note.caption })));
+    const media = dedupeMemoryItems(mergeShared(sharedMedia, read(storageKeys.media, [])).map((item) => ({ ...item, text: item.caption })));
     const uploads = [...notes, ...media].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
     return { rsvps, notes, media, uploads };
   };
@@ -138,16 +164,19 @@
     const voiceNotes = media.filter((item) => item.type === "audio").slice(-4).reverse();
     const archiveChapterOne = archivePhotos.slice(0, 6);
     const archiveChapterTwo = archivePhotos.slice(6, 12);
+    const archiveChapterThree = archivePhotos.slice(12, 18);
+    const archiveChapterFour = archivePhotos.slice(18, 24);
     const itinerary = [
       { date: "FRI · 21 AUG", label: "Main birthday day", items: [["11:00", "Meet in Stratford", "The Breakfast Club Stratford"], ["12:00", "The Breakfast Club reservation", "The Breakfast Club Stratford"], ["13:30–14:30", "Travel to Sutton", "Sutton"], ["14:30–18:00", "Park picnic in Sutton", "Sutton park · indoor backup if raining"], ["18:00", "Settle in + reset", "Sutton"], ["19:00", "Cake, food, gifts + games", "Sutton"]] },
       { date: "SAT · 22 AUG", label: "Kingston pub & night out", items: [["16:00", "Pub or restaurant meet", "Kingston upon Thames"], ["20:00", "Night out", "Location to be confirmed"]] }
     ];
-    const itineraryCards = itinerary.map((day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`).join("");
+    const itineraryCard = (day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`;
+    const gameScores = rankGameScores([...sharedLeaderboard, ...read("marisa-party-leaderboard", [])]);
+    const gameScoreCards = gameScores.length ? gameScores.map((entry, index) => `<li><span class="leaderboard-rank">${String(index + 1).padStart(2, "0")}</span><span class="leaderboard-name">${escapeHtml(entry.name)}</span><strong>${Number(entry.score)}</strong></li>`).join("") : `<li class="party-game-empty">No scores have landed yet — be the first to play.</li>`;
     const wordCards = words.length ? words.map((item) => `<article class="wrapped-quote"><span class="wrapped-quote-mark">“</span><blockquote>${escapeHtml(item.text || "A little birthday love for you.")}</blockquote><footer><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.mood || "sent with love")}</span></footer></article>`).join("") : wrappedEmpty("No words yet", "Your people can still leave something for the memory wall.");
     const momentCards = moments.length ? moments.map(wrappedMediaCard).join("") : wrappedEmpty("No uploads yet", "Photos and videos will appear here as people add them.");
     const voiceCards = voiceNotes.length ? voiceNotes.map((item) => `<article class="wrapped-voice-card"><div class="wrapped-voice-icon"><i class="ph ph-waveform" aria-hidden="true"></i></div><div><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.caption || "A voice note for Marisa")}</span>${item.url ? `<audio controls preload="none" src="${escapeHtml(item.url)}" aria-label="Voice note from ${escapeHtml(item.name || "a friend")}"></audio>` : ""}</div></article>`).join("") : wrappedEmpty("No voice notes yet", "Someone should definitely press record.");
-    const slideCount = 10;
-
+    const slideCount = 14;
     node.innerHTML = `<div class="wrapped-progress" style="--wrapped-count:${slideCount}" aria-label="Wrapped progress">${Array.from({ length: slideCount }, (_, index) => `<span data-wrapped-progress="${index}"></span>`).join("")}</div>
       <div class="wrapped-topbar"><span class="wrapped-brand"><i class="ph ph-sparkle" aria-hidden="true"></i> Marisa Wrapped</span><span>${uploads.length} ${uploads.length === 1 ? "memory" : "memories"} collected</span></div>
       <div class="wrapped-stage">
@@ -166,21 +195,33 @@
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE CAMERA ROLL</p><h2>Moments<br /><em>with you.</em></h2><p>${moments.length ? `${moments.length} new uploads from your favourite people.` : "The next memory is waiting for its close-up."}</p></div><div class="wrapped-upload-grid">${momentCards}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-archive" data-wrapped-slide="4">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">FROM THE ARCHIVE</p><h2>The original<br /><em>favourites.</em></h2><p>A little selection from the Marisa archive — kept here because these moments deserve another replay.</p></div><div class="wrapped-upload-grid">${archiveChapterOne.map(wrappedArchiveCard).join("")}</div>
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">FROM THE ARCHIVE · 01</p><h2>The original<br /><em>favourites.</em></h2><p>A little selection from the Marisa archive — kept here because these moments deserve another replay.</p></div><div class="wrapped-upload-grid">${archiveChapterOne.map(wrappedArchiveCard).join("")}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-archive wrapped-slide-archive-two" data-wrapped-slide="5">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">STILL ICONIC</p><h2>More of<br /><em>your era.</em></h2><p>The archive continues. Same star, different lighting.</p></div><div class="wrapped-upload-grid">${archiveChapterTwo.map(wrappedArchiveCard).join("")}</div>
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">FROM THE ARCHIVE · 02</p><h2>Still<br /><em>iconic.</em></h2><p>Same star, different lighting. Every frame is still completely you.</p></div><div class="wrapped-upload-grid">${archiveChapterTwo.map(wrappedArchiveCard).join("")}</div>
         </article>
-        <article class="wrapped-slide wrapped-slide-voices" data-wrapped-slide="6">
+        <article class="wrapped-slide wrapped-slide-archive" data-wrapped-slide="6">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">FROM THE ARCHIVE · 03</p><h2>Your<br /><em>good era.</em></h2><p>More favourites from the people who have been there for the story.</p></div><div class="wrapped-upload-grid">${archiveChapterThree.map(wrappedArchiveCard).join("")}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-archive wrapped-slide-archive-two" data-wrapped-slide="7">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">FROM THE ARCHIVE · 04</p><h2>One more<br /><em>replay.</em></h2><p>A final little gallery before we get to the weekend itself.</p></div><div class="wrapped-upload-grid">${archiveChapterFour.map(wrappedArchiveCard).join("")}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-voices" data-wrapped-slide="8">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">YOUR BONUS TRACKS</p><h2>Press<br /><em>play.</em></h2><p>Voice notes sound better when they are meant just for you.</p></div><div class="wrapped-voice-list">${voiceCards}</div>
         </article>
-        <article class="wrapped-slide wrapped-slide-soundtrack" data-wrapped-slide="7">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls autoplay muted preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa's first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure></div>
+        <article class="wrapped-slide wrapped-slide-soundtrack" data-wrapped-slide="9">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE ORIGINAL SOUNDTRACK</p><h2>Your first<br /><em>birthday replay.</em></h2><p>A little piece of where this story began — saved here for another listen.</p></div><div class="wrapped-soundtrack-grid"><figure class="wrapped-soundtrack-video"><video controls autoplay muted preload="metadata" poster="${firstBirthdayMedia.poster}" playsinline aria-label="Video from Marisa first birthday"><source src="${firstBirthdayMedia.video}" type="video/mp4" />Your browser does not support video playback.</video><figcaption>First birthday memories</figcaption></figure></div>
         </article>
-        <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="8">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE WEEKEND IN TWO ACTS</p><h2>Your<br /><em>itinerary.</em></h2><p>The working plan — enough structure for the good stuff, with room for the moments in between.</p></div><div class="wrapped-itinerary-grid">${itineraryCards}</div>
+        <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="10">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">FRIDAY · 21 AUGUST</p><h2>The birthday<br /><em>day.</em></h2><p>Breakfast in Stratford, then Sutton for the picnic and the birthday evening.</p></div><div class="wrapped-itinerary-grid">${itineraryCard(itinerary[0])}</div>
         </article>
-        <article class="wrapped-slide wrapped-slide-finale" data-wrapped-slide="9">
+        <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="11">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">SATURDAY · 22 AUGUST</p><h2>Kingston<br /><em>after dark.</em></h2><p>A relaxed afternoon meet, then food, drinks and the night out.</p></div><div class="wrapped-itinerary-grid">${itineraryCard(itinerary[1])}</div>
+        </article>
+        <article class="wrapped-slide wrapped-slide-leaderboard" data-wrapped-slide="12">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE HALL OF FAME</p><h2>Marisa’s<br /><em>party scores.</em></h2><p>The highest score from each player, synced from the birthday game.</p></div><ol class="wrapped-leaderboard">${gameScoreCards}</ol>
+        </article>
+        <article class="wrapped-slide wrapped-slide-finale" data-wrapped-slide="13">
           <div class="wrapped-finale-spark">✦</div><p class="wrapped-kicker">THAT'S A WRAP</p><h2>Happy birthday,<br /><em>Marisa.</em></h2><p>Two planned days, a hundred little moments, and a whole lot of love still to come.</p><div class="wrapped-finale-counts"><span><strong>${uploads.length}</strong> memories</span><span><strong>${rsvps.length}</strong> real responses</span></div><button class="wrapped-replay" type="button" data-wrapped-replay><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> Replay your Wrapped</button></article>
       </div><button class="wrapped-arrow wrapped-arrow-prev" type="button" data-wrapped-prev aria-label="Previous Wrapped slide"><i class="ph ph-arrow-left" aria-hidden="true"></i></button><button class="wrapped-arrow wrapped-arrow-next" type="button" data-wrapped-next aria-label="Next Wrapped slide"><i class="ph ph-arrow-right" aria-hidden="true"></i></button>`;
     node.closest(".wrapped-experience")?.scrollTo(0, 0);
@@ -261,10 +302,11 @@
     try {
       const mediaLimit = Math.max(6, Math.min(40, Number(config.FIREBASE_MEDIA_LIMIT) || 24));
       const recentMediaQuery = "media?orderBy=%22%24key%22&limitToLast=" + mediaLimit;
-      const [rsvps, notes, media] = await Promise.all([sharedFetch("rsvps"), sharedFetch("notes"), sharedFetch(recentMediaQuery)]);
+      const [rsvps, notes, media, leaderboard] = await Promise.all([sharedFetch("rsvps"), sharedFetch("notes"), sharedFetch(recentMediaQuery), sharedFetch("leaderboard")]);
       liveRsvps = sharedItems(rsvps);
       sharedNotes = sharedItems(notes);
       sharedMedia = sharedItems(media);
+      sharedLeaderboard = sharedItems(leaderboard);
       renderAttendees(); renderMemories();
       if (marisaWrappedMode) renderMarisaWrapped();
     } catch {
@@ -302,8 +344,8 @@
   const renderMemories = () => {
     const node = $("[data-memory-grid]");
     if (!node) return;
-    const notes = mergeShared(sharedNotes, read(storageKeys.notes, []));
-    const media = mergeShared(sharedMedia, read(storageKeys.media, []));
+    const notes = dedupeMemoryItems(mergeShared(sharedNotes, read(storageKeys.notes, [])));
+    const media = dedupeMemoryItems(mergeShared(sharedMedia, read(storageKeys.media, [])));
     const cards = [
       ...notes.map((note) => `<figure class="memory-card is-note" style="--tilt:${note.tilt || "0deg"}"><blockquote>“${escapeHtml(note.body)}”</blockquote><figcaption><strong>${escapeHtml(note.name)}</strong>${escapeHtml(note.mood)}</figcaption></figure>`),
       ...media.map((item) => {
@@ -645,6 +687,13 @@
       marisaView.hidden = false;
       renderMarisaWrapped({ autoplay: true });
     }
+    if (mode === "love") {
+      if (!/memories\\.html$/.test(window.location.pathname)) {
+        window.location.href = siteBase + "memories.html#memories";
+        return;
+      }
+      window.setTimeout(() => document.querySelector("[data-memory-form]")?.scrollIntoView({ behavior: "smooth", block: "start" }), 80);
+    }
   };
 
   const setupGate = () => {
@@ -652,12 +701,13 @@
     $("[data-marisa-back]")?.addEventListener("click", returnToPassword);
     let access = "";
     try { access = sessionStorage.getItem("marisa-birthday-access") || ""; } catch { /* continue locked */ }
-    if (access === "guest" || access === "marisa" || access === "party") { unlockWebsite(access); return; }
+    if (access === "guest" || access === "marisa" || access === "party" || access === "love") { unlockWebsite(access); return; }
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       const password = new FormData(form).get("password").toString().trim().toLowerCase();
       const status = $("[data-gate-status]");
       if (password === "happybirthday") { status.textContent = "Welcome in — keep the link within the group."; unlockWebsite("guest"); return; }
+      if (password === "sendinglove") { status.textContent = "Love route unlocked — straight to the memory wall."; unlockWebsite("love"); return; }
       if (password === "party") { status.textContent = "Party mode unlocked ✦"; unlockWebsite("party"); return; }
       if (password === "210803") {
         if (isBirthdayToday()) { unlockWebsite("marisa"); return; }
