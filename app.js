@@ -102,7 +102,7 @@
     const response = await sharedFetch(collection, { method: "POST", body: JSON.stringify({ ...item, access: config.FIREBASE_ACCESS_KEY }) });
     return Boolean(response?.name);
   };
-  const mergeShared = (shared, local) => [...shared, ...local.filter((item) => !shared.some((remote) => remote.createdAt && remote.name === item.name))];
+  const mergeShared = (shared, local) => [...shared, ...local.filter((item) => !shared.some((remote) => remote.createdAt && remote.createdAt === item.createdAt && remote.name === item.name))];
   const memoryFingerprint = (item) => {
     const type = item.type || "message";
     const name = String(item.name || "").trim().toLowerCase();
