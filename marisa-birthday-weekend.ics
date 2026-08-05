@@ -32,8 +32,8 @@ UID:marisa-birthday-3@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260821T143000
 DTEND;TZID=Europe/London:20260821T180000
-SUMMARY:Park picnic in Sutton
-DESCRIPTION:Sutton park - indoor backup if raining
+SUMMARY:Park picnic at Collingwood Park
+DESCRIPTION:Collingwood Park, Sutton - indoor backup if raining
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-4@birthday
