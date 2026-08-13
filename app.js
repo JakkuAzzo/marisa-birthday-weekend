@@ -107,7 +107,7 @@
     const [resourcePath, queryString] = path.split("?");
     const requestUrl = sharedBase + "/" + resourcePath + ".json" + (queryString ? "?" + queryString : "");
     const headers = { ...(options.headers || {}) };
-    if (options.body !== undefined) headers["Content-Type"] = "application/json";
+    if (options.body !== undefined) headers["Content-Type"] = "text/plain;charset=UTF-8";
     const response = await fetch(requestUrl, { cache: "no-store", ...options, headers });
     if (!response.ok) throw new Error("Shared storage returned " + response.status);
     return response.status === 204 ? null : response.json();
