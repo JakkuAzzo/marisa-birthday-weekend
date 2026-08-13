@@ -108,7 +108,9 @@
     const requestUrl = sharedBase + "/" + resourcePath + ".json" + (queryString ? "?" + queryString : "");
     const headers = { ...(options.headers || {}) };
     if (options.body !== undefined) headers["Content-Type"] = "text/plain;charset=UTF-8";
-    const response = await fetch(requestUrl, { cache: "no-store", ...options, headers });
+    const isWrite = String(options.method || "GET").toUpperCase() !== "GET";
+    const response = await fetch(requestUrl, { cache: "no-store", ...options, mode: isWrite ? "no-cors" : options.mode, headers });
+    if (isWrite) return { name: "dispatched" };
     if (!response.ok) throw new Error("Shared storage returned " + response.status);
     return response.status === 204 ? null : response.json();
   };
