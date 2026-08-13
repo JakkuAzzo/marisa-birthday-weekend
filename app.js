@@ -219,7 +219,7 @@
     const localVotes = read("marisa-meme-votes", []);
     write("marisa-meme-votes", [...localVotes.filter((item) => !(item.voter?.toLowerCase() === voter.toLowerCase() && item.kind === kind)), vote]);
     let synced = false;
-    try { synced = sharedBase ? await pushShared("memeVotes", vote) : false; } catch { /* local vote remains available */ }
+    try { synced = sharedBase ? await pushShared("notes", { ...vote, type: "memeVote" }) : false; } catch { /* local vote remains available */ }
     const status = root?.querySelector("[data-meme-status]");
     if (status) status.textContent = synced ? "Vote saved for the group ✦" : "Vote saved on this device — shared sync is unavailable.";
     return true;
