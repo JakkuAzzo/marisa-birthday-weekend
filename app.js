@@ -105,7 +105,8 @@
   const sharedFetch = async (path, options = {}) => {
     if (!sharedBase) return null;
     const [resourcePath, queryString] = path.split("?");
-    const requestUrl = sharedBase + "/" + resourcePath + ".json" + (queryString ? "?" + queryString : "");
+    const authSuffix = config.FIREBASE_ACCESS_KEY ? (queryString ? "&" : "?") + "auth=" + encodeURIComponent(config.FIREBASE_ACCESS_KEY) : "";
+    const requestUrl = sharedBase + "/" + resourcePath + ".json" + (queryString ? "?" + queryString : "") + authSuffix;
     const headers = { ...(options.headers || {}) };
     if (options.body !== undefined) headers["Content-Type"] = "text/plain;charset=UTF-8";
     const isWrite = String(options.method || "GET").toUpperCase() !== "GET";
