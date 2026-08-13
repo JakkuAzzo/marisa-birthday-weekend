@@ -169,10 +169,18 @@
   };
 
   const memePrompt = (id) => memePromptBank.find((item) => item.id === id) || memePromptBank[0];
-  const memeVoteCounts = (votes) => votes.filter((vote) => vote.kind === "crowd").reduce((counts, vote) => {
-    counts[vote.answerId] = (counts[vote.answerId] || 0) + 1;
-    return counts;
-  }, {});
+  const memeVoteCounts = (votes) => {
+    const latestByVoter = new Map();
+    votes.filter((vote) => vote.kind === "crowd").forEach((vote) => {
+      const voterKey = String(vote.voter || vote.id || "").trim().toLowerCase();
+      const previous = latestByVoter.get(voterKey);
+      if (!previous || new Date(vote.createdAt || 0) > new Date(previous.createdAt || 0)) latestByVoter.set(voterKey, vote);
+    });
+    return [...latestByVoter.values()].reduce((counts, vote) => {
+      counts[vote.answerId] = (counts[vote.answerId] || 0) + 1;
+      return counts;
+    }, {});
+  };
   const memeLatestMarisaPick = (votes) => [...votes].filter((vote) => vote.kind === "marisa").sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0];
   const memeRevealOpen = () => isBirthdayToday() || marisaWrappedMode;
 
@@ -205,8 +213,9 @@
     }
     const vote = { id: "meme-vote-" + Date.now() + "-" + Math.random().toString(16).slice(2), answerId, kind, voter, createdAt: new Date().toISOString() };
     const localVotes = read("marisa-meme-votes", []);
-    write("marisa-meme-votes", [...localVotes.filter((item) => !(item.voter?.toLowerCase() === voter.toLowerCase() && item.answerId === answerId && item.kind === kind)), vote]);
-    const synced = sharedBase ? await pushShared("memeVotes", vote) : false;
+    write("marisa-meme-votes", [...localVotes.filter((item) => !(item.voter?.toLowerCase() === voter.toLowerCase() && item.kind === kind)), vote]);
+    let synced = false;
+    try { synced = sharedBase ? await pushShared("memeVotes", vote) : false; } catch { /* local vote remains available */ }
     const status = root?.querySelector("[data-meme-status]");
     if (status) status.textContent = synced ? "Vote saved for the group ✦" : "Vote saved on this device — shared sync is unavailable.";
     return true;
@@ -224,7 +233,8 @@
     const answer = { id: "meme-" + Date.now() + "-" + Math.random().toString(16).slice(2), name, promptId, answer: answerText, createdAt: new Date().toISOString() };
     const localAnswers = read("marisa-meme-answers", []);
     write("marisa-meme-answers", [...localAnswers, answer]);
-    const synced = sharedBase ? await pushShared("memeAnswers", answer) : false;
+    let synced = false;
+    try { synced = sharedBase ? await pushShared("memeAnswers", answer) : false; } catch { /* local answer remains available */ }
     root.querySelector("[data-meme-status]").textContent = synced ? "Answer saved to the birthday room ✦" : "Answer saved on this device — shared sync is unavailable.";
     form.reset();
     renderMemeGame(root);
