@@ -222,7 +222,7 @@
     const localVotes = read("marisa-meme-votes", []);
     write("marisa-meme-votes", [...localVotes.filter((item) => !(item.voter?.toLowerCase() === voter.toLowerCase() && item.kind === kind)), vote]);
     let synced = false;
-    try { synced = sharedBase ? await pushShared("notes", { ...vote, type: "memeVote" }) : false; } catch { /* local vote remains available */ }
+    try { synced = sharedBase ? await pushShared("notes", { ...vote, type: "memeVote", body: "meme vote" }) : false; } catch { /* local vote remains available */ }
     const status = root?.querySelector("[data-meme-status]");
     if (status) status.textContent = synced ? "Vote saved for the group ✦" : "Vote saved on this device — shared sync is unavailable.";
     return true;
@@ -257,7 +257,7 @@
     const sameAnswer = (item) => String(item.name || "").trim().toLowerCase() === name.toLowerCase() && item.promptId === promptId;
     write("marisa-meme-answers", [...localAnswers.filter((item) => !sameAnswer(item)), answer]);
     let synced = false;
-    try { synced = sharedBase ? await pushShared("notes", { ...answer, type: "memeAnswer" }) : false; } catch { /* local answer remains available */ }
+    try { synced = sharedBase ? await pushShared("notes", { ...answer, type: "memeAnswer", body: answer.answer }) : false; } catch { /* local answer remains available */ }
     write("marisa-meme-player-name", name);
     memeStatusMessage = synced ? "Saved to the shared birthday room ✦ Moving to the next prompt." : "Saved on this device — shared sync was unavailable. Moving to the next prompt.";
     renderMemeGame(root);
