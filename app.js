@@ -90,6 +90,7 @@
   let marisaWrappedMode = false;
   let partyGame = null;
   let memeGame = null;
+  let memeStatusMessage = "";
   const contributions = [
     { id: "gift", title: "Gift fund", detail: "Optional group gift for Marisa", icon: "ph-gift", amount: () => config.contributionAmounts?.gift ?? 15 }
   ];
@@ -145,14 +146,14 @@
   const getMemeAnswers = () => {
     const localAnswers = read("marisa-meme-answers", []);
     const combined = [...sharedMemeAnswers, ...localAnswers];
-    const seen = new Set();
-    return combined.filter((answer) => {
-      if (!answer || !String(answer.answer || "").trim()) return false;
-      const key = String(answer.id || (answer.name || "") + "|" + (answer.promptId || "") + "|" + answer.answer).trim().toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
-    }).sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+    const latestByPlayerPrompt = new Map();
+    combined.forEach((answer) => {
+      if (!answer || !String(answer.answer || "").trim()) return;
+      const playerPrompt = String((answer.name || "friend") + "|" + (answer.promptId || "")).trim().toLowerCase();
+      const previous = latestByPlayerPrompt.get(playerPrompt);
+      if (!previous || new Date(answer.createdAt || 0) >= new Date(previous.createdAt || 0)) latestByPlayerPrompt.set(playerPrompt, answer);
+    });
+    return [...latestByPlayerPrompt.values()].sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
   };
 
   const getMemeVotes = () => {
@@ -195,11 +196,12 @@
       const prompt = memePrompt(answer.promptId);
       const crowdCount = counts[answer.id] || 0;
       const isPick = pick?.answerId === answer.id;
+      const image = answer.image ? '<figure class="party-meme-image"><img src="' + escapeHtml(answer.image) + '" loading="lazy" alt="Meme uploaded by ' + escapeHtml(answer.name || "a friend") + '" /></figure>' : '';
       const actions = '<div class="party-meme-vote-actions">' +
         '<button type="button" class="party-meme-vote" data-meme-vote="crowd" data-meme-answer="' + escapeHtml(answer.id) + '"><i class="ph ph-heart" aria-hidden="true"></i> Funniest <span>' + crowdCount + '</span></button>' +
         (wrapped ? '<button type="button" class="party-meme-vote party-meme-vote-marisa' + (isPick ? ' is-selected' : '') + '" data-meme-vote="marisa" data-meme-answer="' + escapeHtml(answer.id) + '"><i class="ph ph-sparkle" aria-hidden="true"></i> ' + (isPick ? 'Marisa’s pick' : 'Pick this') + '</button>' : '') +
         '</div>';
-      return '<article class="party-meme-answer-card' + (isPick ? ' is-marisa-pick' : '') + '"><p class="party-meme-prompt">' + escapeHtml(prompt.prompt) + '</p><blockquote>“' + escapeHtml(answer.answer) + '”</blockquote><footer><strong>' + escapeHtml(answer.name || "A friend") + '</strong><span>' + (isPick ? 'Marisa’s pick ✦' : crowdCount + (crowdCount === 1 ? ' vote' : ' votes')) + '</span></footer>' + actions + '</article>';
+      return '<article class="party-meme-answer-card' + (isPick ? ' is-marisa-pick' : '') + '"><p class="party-meme-prompt">' + escapeHtml(prompt.prompt) + '</p>' + image + '<blockquote>“' + escapeHtml(answer.answer) + '”</blockquote><footer><strong>' + escapeHtml(answer.name || "A friend") + '</strong><span>' + (isPick ? 'Marisa’s pick ✦' : crowdCount + (crowdCount === 1 ? ' vote' : ' votes')) + '</span></footer>' + actions + '</article>';
     }).join("") + '</div>';
   };
 
@@ -226,17 +228,33 @@
     const name = String(formData.get("name") || "").trim().slice(0, 24);
     const promptId = String(formData.get("promptId") || "");
     const answerText = String(formData.get("answer") || "").trim().slice(0, 180);
+    const imageFile = form.querySelector("[name=memeImage]")?.files?.[0];
     if (!name || !promptId || !answerText) {
-      root.querySelector("[data-meme-status]").textContent = "Add your name, choose a prompt and write an answer.";
+      root.querySelector("[data-meme-status]").textContent = "Add your name and answer this prompt first.";
       return;
     }
-    const answer = { id: "meme-" + Date.now() + "-" + Math.random().toString(16).slice(2), name, promptId, answer: answerText, createdAt: new Date().toISOString() };
+    if (imageFile && !imageFile.type.startsWith("image/")) {
+      root.querySelector("[data-meme-status]").textContent = "Meme uploads must be an image.";
+      return;
+    }
+    let image = "";
+    if (imageFile) {
+      const compressed = await compressImage(imageFile);
+      const dataUrl = await fileToDataUrl(compressed);
+      if (dataUrl.length > 1200000) {
+        root.querySelector("[data-meme-status]").textContent = "That meme is still too large after compression. Try a smaller image.";
+        return;
+      }
+      image = dataUrl;
+    }
+    const answer = { id: "meme-" + Date.now() + "-" + Math.random().toString(16).slice(2), name, promptId, answer: answerText, image, createdAt: new Date().toISOString() };
     const localAnswers = read("marisa-meme-answers", []);
-    write("marisa-meme-answers", [...localAnswers, answer]);
+    const sameAnswer = (item) => String(item.name || "").trim().toLowerCase() === name.toLowerCase() && item.promptId === promptId;
+    write("marisa-meme-answers", [...localAnswers.filter((item) => !sameAnswer(item)), answer]);
     let synced = false;
     try { synced = sharedBase ? await pushShared("memeAnswers", answer) : false; } catch { /* local answer remains available */ }
-    root.querySelector("[data-meme-status]").textContent = synced ? "Answer saved to the birthday room ✦" : "Answer saved on this device — shared sync is unavailable.";
-    form.reset();
+    write("marisa-meme-player-name", name);
+    memeStatusMessage = synced ? "Saved to the shared birthday room ✦ Moving to the next prompt." : "Saved on this device — shared sync was unavailable. Moving to the next prompt.";
     renderMemeGame(root);
   };
 
@@ -245,10 +263,23 @@
     const answers = getMemeAnswers();
     const votes = getMemeVotes();
     const reveal = memeRevealOpen();
-    root.innerHTML = '<div class="party-meme-heading"><p class="party-game-panel-kicker">SECOND GAME · NO WRONG ANSWERS</p><h2 id="party-meme-title">What do you meme<br /><em>about Marisa?</em></h2><p>Pick a prompt, write the answer your friends will laugh at, then come back on her birthday to see every answer. There are no correct answers — only the crowd favourite and Marisa’s own pick.</p></div>' +
-      '<form class="party-meme-form" data-meme-form><label>Your name<input name="name" type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" required /></label><label>Choose a prompt<select name="promptId">' + memePromptBank.map((item) => '<option value="' + item.id + '">' + escapeHtml(item.label) + '</option>').join("") + '</select></label><label>Your answer<textarea name="answer" maxlength="180" rows="3" placeholder="Make it funny, sweet or completely ridiculous…" required></textarea></label><button class="button button-coral" type="submit"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i> Submit answer</button></form>' +
-      '<p class="party-meme-note"><i class="ph ph-eye-slash" aria-hidden="true"></i> ' + (reveal ? "The answer room is open — vote for the funniest answer." : "Answers stay hidden until the birthday reveal.") + '</p>' +
-      (reveal ? '<div class="party-meme-voter"><label for="party-meme-voter-name">Your voting name</label><input id="party-meme-voter-name" data-meme-voter-name type="text" maxlength="24" autocomplete="nickname" placeholder="Name for the vote" /><p data-meme-status role="status" aria-live="polite"></p></div>' : '<p class="party-meme-status" data-meme-status role="status" aria-live="polite"></p>') +
+    const savedName = String(read("marisa-meme-player-name", "") || "");
+    const playerAnswers = savedName ? answers.filter((answer) => String(answer.name || "").trim().toLowerCase() === savedName.trim().toLowerCase()) : [];
+    const nextPrompt = memePromptBank.find((prompt) => !playerAnswers.some((answer) => answer.promptId === prompt.id));
+    const nextPromptIndex = nextPrompt ? memePromptBank.indexOf(nextPrompt) : memePromptBank.length;
+    const completed = Boolean(savedName && !nextPrompt);
+    const completionCount = Math.min(memePromptBank.length, playerAnswers.length);
+    const completionPercent = Math.round((completionCount / memePromptBank.length) * 100);
+    const statusMessage = memeStatusMessage;
+    memeStatusMessage = "";
+    const promptContent = completed
+      ? '<div class="party-meme-complete"><i class="ph ph-check-circle" aria-hidden="true"></i><strong>All prompts answered ✦</strong><span>You completed the Marisa meme challenge. Come back on her birthday to see the reveal.</span></div>'
+      : '<div class="party-meme-current-prompt"><span>Prompt ' + (nextPromptIndex + 1) + ' of ' + memePromptBank.length + '</span><strong>' + escapeHtml(nextPrompt.prompt) + '</strong></div><input type="hidden" name="promptId" value="' + escapeHtml(nextPrompt.id) + '" /><label>Your answer<textarea name="answer" maxlength="180" rows="3" placeholder="Make it funny, sweet or completely ridiculous…" required></textarea></label><label class="party-meme-upload">Optional meme image<input name="memeImage" type="file" accept="image/*" capture="environment" /><small>Upload a reaction image to go with your answer · max 1.2 MB after compression</small><span class="party-meme-image-preview" data-meme-image-preview hidden></span></label><button class="button button-coral" type="submit"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i> Submit answer &amp; continue</button>';
+    root.innerHTML = '<div class="party-meme-heading"><p class="party-game-panel-kicker">SECOND GAME · NO WRONG ANSWERS</p><h2 id="party-meme-title">What do you meme<br /><em>about Marisa?</em></h2><p>Answer each prompt one at a time, then the game automatically moves you forward. There are no correct answers — only the crowd favourite and Marisa’s own pick.</p></div>' +
+      '<div class="party-meme-progress-meta"><span>' + (savedName ? escapeHtml(savedName) + "’s progress" : "Your progress") + '</span><strong>' + completionCount + ' / ' + memePromptBank.length + ' prompts · ' + completionPercent + '%</strong></div><div class="party-meme-progress" role="progressbar" aria-label="Meme prompt completion" aria-valuemin="0" aria-valuemax="' + memePromptBank.length + '" aria-valuenow="' + completionCount + '"><span style="width:' + completionPercent + '%"></span></div>' +
+      '<form class="party-meme-form" data-meme-form><label>Your name<input name="name" type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" value="' + escapeHtml(savedName) + '" required /></label>' + promptContent + '</form>' +
+      '<p class="party-meme-note"><i class="ph ph-eye-slash" aria-hidden="true"></i> ' + (reveal ? "The answer room is open — vote for the funniest answer." : "Answers stay hidden until the birthday reveal.") + '</p>' + (statusMessage ? '<p class="party-meme-status" data-meme-status role="status" aria-live="polite">' + escapeHtml(statusMessage) + '</p>' : '<p class="party-meme-status" data-meme-status role="status" aria-live="polite"></p>') +
+      (reveal ? '<div class="party-meme-voter"><label for="party-meme-voter-name">Your voting name</label><input id="party-meme-voter-name" data-meme-voter-name type="text" maxlength="24" autocomplete="nickname" placeholder="Name for the vote" /><p data-meme-status role="status" aria-live="polite"></p></div>' : '') +
       '<div class="party-meme-voting">' + memeAnswerCards(answers, votes, { reveal }) + '</div>';
   };
 
@@ -266,6 +297,16 @@
       if (!button) return;
       await saveMemeVote(button.dataset.memeAnswer, button.dataset.memeVote, root);
       renderMemeGame(root);
+    });
+    root.addEventListener("change", (event) => {
+      const input = event.target.closest("[name=memeImage]");
+      const preview = root.querySelector("[data-meme-image-preview]");
+      const file = input?.files?.[0];
+      if (!preview) return;
+      if (!file) { preview.hidden = true; preview.innerHTML = ""; return; }
+      const url = URL.createObjectURL(file);
+      preview.hidden = false;
+      preview.innerHTML = '<img src="' + escapeHtml(url) + '" alt="Selected meme preview" />';
     });
     renderMemeGame(root);
     memeGame = { render: () => renderMemeGame(root), root };
