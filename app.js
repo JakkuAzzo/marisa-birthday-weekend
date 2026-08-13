@@ -61,6 +61,16 @@
     video: "assets/media/marisa-first-birthday.mp4",
     poster: "assets/photos/optimized/marisa-bouquet.webp",
   };
+  const memePromptBank = [
+    { id: "late", label: "Marisa is late because…", prompt: "Marisa is late because…" },
+    { id: "show", label: "The title of Marisa’s reality show would be…", prompt: "The title of Marisa’s reality show would be…" },
+    { id: "power", label: "Marisa’s most useful superpower is…", prompt: "Marisa’s most useful superpower is…" },
+    { id: "island", label: "If Marisa had a private island, it would be called…", prompt: "If Marisa had a private island, it would be called…" },
+    { id: "talent", label: "A secret talent Marisa definitely has is…", prompt: "A secret talent Marisa definitely has is…" },
+    { id: "catchphrase", label: "Marisa’s unofficial catchphrase is…", prompt: "Marisa’s unofficial catchphrase is…" },
+    { id: "weekend", label: "The perfect Marisa birthday weekend needs…", prompt: "The perfect Marisa birthday weekend needs…" },
+    { id: "song", label: "The song that should play when Marisa enters a room is…", prompt: "The song that should play when Marisa enters a room is…" }
+  ];
   const defaultAttendees = [
     { name: "Marisa", image: "assets/photos/optimized/marisa-roses.webp" },
     { name: "Nafe", image: "assets/photos/optimized/marisa-nafe-water.webp" },
@@ -73,10 +83,13 @@
   let sharedNotes = [];
   let sharedMedia = [];
   let sharedLeaderboard = [];
+  let sharedMemeAnswers = [];
+  let sharedMemeVotes = [];
   let memoryPage = 0;
   let marisaWrappedSlide = 0;
   let marisaWrappedMode = false;
   let partyGame = null;
+  let memeGame = null;
   const contributions = [
     { id: "gift", title: "Gift fund", detail: "Optional group gift for Marisa", icon: "ph-gift", amount: () => config.contributionAmounts?.gift ?? 15 }
   ];
@@ -129,6 +142,125 @@
     return [...highestByPlayer.values()].sort((a, b) => Number(b.score) - Number(a.score)).slice(0, 10);
   };
 
+  const getMemeAnswers = () => {
+    const localAnswers = read("marisa-meme-answers", []);
+    const combined = [...sharedMemeAnswers, ...localAnswers];
+    const seen = new Set();
+    return combined.filter((answer) => {
+      if (!answer || !String(answer.answer || "").trim()) return false;
+      const key = String(answer.id || (answer.name || "") + "|" + (answer.promptId || "") + "|" + answer.answer).trim().toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    }).sort((a, b) => new Date(a.createdAt || 0) - new Date(b.createdAt || 0));
+  };
+
+  const getMemeVotes = () => {
+    const localVotes = read("marisa-meme-votes", []);
+    const combined = [...sharedMemeVotes, ...localVotes];
+    const seen = new Set();
+    return combined.filter((vote) => {
+      if (!vote || !vote.answerId || !vote.kind) return false;
+      const key = String(vote.id || (vote.answerId + "|" + vote.kind + "|" + (vote.voter || "") + "|" + (vote.createdAt || "")));
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  };
+
+  const memePrompt = (id) => memePromptBank.find((item) => item.id === id) || memePromptBank[0];
+  const memeVoteCounts = (votes) => votes.filter((vote) => vote.kind === "crowd").reduce((counts, vote) => {
+    counts[vote.answerId] = (counts[vote.answerId] || 0) + 1;
+    return counts;
+  }, {});
+  const memeLatestMarisaPick = (votes) => [...votes].filter((vote) => vote.kind === "marisa").sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0))[0];
+  const memeRevealOpen = () => isBirthdayToday() || marisaWrappedMode;
+
+  const memeAnswerCards = (answers, votes, options = {}) => {
+    const reveal = Boolean(options.reveal);
+    const wrapped = Boolean(options.wrapped);
+    if (!answers.length) return '<div class="party-meme-locked"><i class="ph ph-sparkle" aria-hidden="true"></i><strong>The answer room is waiting.</strong><span>Pick a prompt and give Marisa your best answer.</span></div>';
+    if (!reveal) return '<div class="party-meme-locked"><i class="ph ph-lock-key" aria-hidden="true"></i><strong>Answers are hidden until the birthday.</strong><span>Submit yours now — the reveals will open in Marisa’s Wrapped.</span></div>';
+    const counts = memeVoteCounts(votes);
+    const pick = memeLatestMarisaPick(votes);
+    return '<div class="party-meme-answer-grid">' + answers.map((answer) => {
+      const prompt = memePrompt(answer.promptId);
+      const crowdCount = counts[answer.id] || 0;
+      const isPick = pick?.answerId === answer.id;
+      const actions = '<div class="party-meme-vote-actions">' +
+        '<button type="button" class="party-meme-vote" data-meme-vote="crowd" data-meme-answer="' + escapeHtml(answer.id) + '"><i class="ph ph-heart" aria-hidden="true"></i> Funniest <span>' + crowdCount + '</span></button>' +
+        (wrapped ? '<button type="button" class="party-meme-vote party-meme-vote-marisa' + (isPick ? ' is-selected' : '') + '" data-meme-vote="marisa" data-meme-answer="' + escapeHtml(answer.id) + '"><i class="ph ph-sparkle" aria-hidden="true"></i> ' + (isPick ? 'Marisa’s pick' : 'Pick this') + '</button>' : '') +
+        '</div>';
+      return '<article class="party-meme-answer-card' + (isPick ? ' is-marisa-pick' : '') + '"><p class="party-meme-prompt">' + escapeHtml(prompt.prompt) + '</p><blockquote>“' + escapeHtml(answer.answer) + '”</blockquote><footer><strong>' + escapeHtml(answer.name || "A friend") + '</strong><span>' + (isPick ? 'Marisa’s pick ✦' : crowdCount + (crowdCount === 1 ? ' vote' : ' votes')) + '</span></footer>' + actions + '</article>';
+    }).join("") + '</div>';
+  };
+
+  const saveMemeVote = async (answerId, kind, root) => {
+    const voter = root?.querySelector("[data-meme-voter-name]")?.value.trim().slice(0, 24);
+    if (!voter) {
+      const status = root?.querySelector("[data-meme-status]");
+      if (status) status.textContent = "Add your name before voting.";
+      root?.querySelector("[data-meme-voter-name]")?.focus();
+      return false;
+    }
+    const vote = { id: "meme-vote-" + Date.now() + "-" + Math.random().toString(16).slice(2), answerId, kind, voter, createdAt: new Date().toISOString() };
+    const localVotes = read("marisa-meme-votes", []);
+    write("marisa-meme-votes", [...localVotes.filter((item) => !(item.voter?.toLowerCase() === voter.toLowerCase() && item.answerId === answerId && item.kind === kind)), vote]);
+    const synced = sharedBase ? await pushShared("memeVotes", vote) : false;
+    const status = root?.querySelector("[data-meme-status]");
+    if (status) status.textContent = synced ? "Vote saved for the group ✦" : "Vote saved on this device — shared sync is unavailable.";
+    return true;
+  };
+
+  const saveMemeAnswer = async (form, root) => {
+    const formData = new FormData(form);
+    const name = String(formData.get("name") || "").trim().slice(0, 24);
+    const promptId = String(formData.get("promptId") || "");
+    const answerText = String(formData.get("answer") || "").trim().slice(0, 180);
+    if (!name || !promptId || !answerText) {
+      root.querySelector("[data-meme-status]").textContent = "Add your name, choose a prompt and write an answer.";
+      return;
+    }
+    const answer = { id: "meme-" + Date.now() + "-" + Math.random().toString(16).slice(2), name, promptId, answer: answerText, createdAt: new Date().toISOString() };
+    const localAnswers = read("marisa-meme-answers", []);
+    write("marisa-meme-answers", [...localAnswers, answer]);
+    const synced = sharedBase ? await pushShared("memeAnswers", answer) : false;
+    root.querySelector("[data-meme-status]").textContent = synced ? "Answer saved to the birthday room ✦" : "Answer saved on this device — shared sync is unavailable.";
+    form.reset();
+    renderMemeGame(root);
+  };
+
+  const renderMemeGame = (root) => {
+    if (!root) return;
+    const answers = getMemeAnswers();
+    const votes = getMemeVotes();
+    const reveal = memeRevealOpen();
+    root.innerHTML = '<div class="party-meme-heading"><p class="party-game-panel-kicker">SECOND GAME · NO WRONG ANSWERS</p><h2 id="party-meme-title">What do you meme<br /><em>about Marisa?</em></h2><p>Pick a prompt, write the answer your friends will laugh at, then come back on her birthday to see every answer. There are no correct answers — only the crowd favourite and Marisa’s own pick.</p></div>' +
+      '<form class="party-meme-form" data-meme-form><label>Your name<input name="name" type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" required /></label><label>Choose a prompt<select name="promptId">' + memePromptBank.map((item) => '<option value="' + item.id + '">' + escapeHtml(item.label) + '</option>').join("") + '</select></label><label>Your answer<textarea name="answer" maxlength="180" rows="3" placeholder="Make it funny, sweet or completely ridiculous…" required></textarea></label><button class="button button-coral" type="submit"><i class="ph ph-paper-plane-tilt" aria-hidden="true"></i> Submit answer</button></form>' +
+      '<p class="party-meme-note"><i class="ph ph-eye-slash" aria-hidden="true"></i> ' + (reveal ? "The answer room is open — vote for the funniest answer." : "Answers stay hidden until the birthday reveal.") + '</p>' +
+      (reveal ? '<div class="party-meme-voter"><label for="party-meme-voter-name">Your voting name</label><input id="party-meme-voter-name" data-meme-voter-name type="text" maxlength="24" autocomplete="nickname" placeholder="Name for the vote" /><p data-meme-status role="status" aria-live="polite"></p></div>' : '<p class="party-meme-status" data-meme-status role="status" aria-live="polite"></p>') +
+      '<div class="party-meme-voting">' + memeAnswerCards(answers, votes, { reveal }) + '</div>';
+  };
+
+  const setupMemeGame = () => {
+    const root = $("[data-party-meme-game]");
+    if (!root || root.dataset.ready) return;
+    root.dataset.ready = "true";
+    root.addEventListener("submit", async (event) => {
+      if (!event.target.matches("[data-meme-form]")) return;
+      event.preventDefault();
+      await saveMemeAnswer(event.target, root);
+    });
+    root.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-meme-vote]");
+      if (!button) return;
+      await saveMemeVote(button.dataset.memeAnswer, button.dataset.memeVote, root);
+      renderMemeGame(root);
+    });
+    renderMemeGame(root);
+    memeGame = { render: () => renderMemeGame(root), root };
+  };
+
   const getWrappedData = () => {
     const localRsvps = read(storageKeys.rsvps, []);
     const rsvps = [...liveRsvps, ...localRsvps].reduce((list, person) => {
@@ -158,6 +290,12 @@
     const node = $("[data-marisa-wrapped]");
     if (!node) return;
     const { rsvps, notes, media, uploads } = getWrappedData();
+    const memeAnswers = getMemeAnswers();
+    const memeVotes = getMemeVotes();
+    const memeCards = memeAnswerCards(memeAnswers, memeVotes, { reveal: true, wrapped: true });
+    const memeCounts = memeVoteCounts(memeVotes);
+    const memeCrowdLeader = memeAnswers.map((answer) => ({ answer, count: memeCounts[answer.id] || 0 })).sort((a, b) => b.count - a.count)[0];
+    const memePick = memeLatestMarisaPick(memeVotes);
     const names = rsvps.map((person) => person.name).slice(0, 12);
     const words = notes.slice(-6).reverse();
     const moments = media.filter((item) => item.type === "image" || item.type === "video").slice(-6).reverse();
@@ -176,7 +314,7 @@
     const wordCards = words.length ? words.map((item) => `<article class="wrapped-quote"><span class="wrapped-quote-mark">“</span><blockquote>${escapeHtml(item.text || "A little birthday love for you.")}</blockquote><footer><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.mood || "sent with love")}</span></footer></article>`).join("") : wrappedEmpty("No words yet", "Your people can still leave something for the memory wall.");
     const momentCards = moments.length ? moments.map(wrappedMediaCard).join("") : wrappedEmpty("No uploads yet", "Photos and videos will appear here as people add them.");
     const voiceCards = voiceNotes.length ? voiceNotes.map((item) => `<article class="wrapped-voice-card"><div class="wrapped-voice-icon"><i class="ph ph-waveform" aria-hidden="true"></i></div><div><strong>${escapeHtml(item.name || "A friend")}</strong><span>${escapeHtml(item.caption || "A voice note for Marisa")}</span>${item.url ? `<audio controls preload="none" src="${escapeHtml(item.url)}" aria-label="Voice note from ${escapeHtml(item.name || "a friend")}"></audio>` : ""}</div></article>`).join("") : wrappedEmpty("No voice notes yet", "Someone should definitely press record.");
-    const slideCount = 14;
+    const slideCount = 15;
     node.innerHTML = `<div class="wrapped-progress" style="--wrapped-count:${slideCount}" aria-label="Wrapped progress">${Array.from({ length: slideCount }, (_, index) => `<span data-wrapped-progress="${index}"></span>`).join("")}</div>
       <div class="wrapped-topbar"><span class="wrapped-brand"><i class="ph ph-sparkle" aria-hidden="true"></i> Marisa Wrapped</span><span>${uploads.length} ${uploads.length === 1 ? "memory" : "memories"} collected</span></div>
       <div class="wrapped-stage">
@@ -218,10 +356,16 @@
         <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="11">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">SATURDAY · 22 AUGUST</p><h2>Kingston<br /><em>after dark.</em></h2><p>A relaxed afternoon meet, then food, drinks and the night out.</p></div><div class="wrapped-itinerary-grid">${itineraryCard(itinerary[1])}</div>
         </article>
+        <article class="wrapped-slide wrapped-slide-meme" data-wrapped-slide="13">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE MARISA MEME AWARDS</p><h2>Everyone’s<br /><em>best answers.</em></h2><p>There are no correct answers here — just the ones that made the group laugh, plus Marisa’s favourite pick.</p></div>
+          <div class="wrapped-meme-summary"><span><strong>\${memeAnswers.length}</strong> answers</span><span><strong>\${memeCrowdLeader ? memeCrowdLeader.count : 0}</strong> votes on the current crowd favourite</span><span><strong>\${memePick ? "1" : "0"}</strong> Marisa pick</span></div>
+          <div class="wrapped-meme-voter"><label for="wrapped-meme-voter-name">Add your name to vote</label><input id="wrapped-meme-voter-name" data-meme-voter-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" /><p data-meme-status role="status" aria-live="polite"></p></div>
+          <div class="wrapped-meme-grid">\${memeCards.replace('<div class="party-meme-answer-grid">', '').replace('</div>', '')}</div>
+        </article>
         <article class="wrapped-slide wrapped-slide-leaderboard" data-wrapped-slide="12">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE HALL OF FAME</p><h2>Marisa’s<br /><em>party scores.</em></h2><p>The highest score from each player, synced from the birthday game.</p></div><ol class="wrapped-leaderboard">${gameScoreCards}</ol>
         </article>
-        <article class="wrapped-slide wrapped-slide-finale" data-wrapped-slide="13">
+        <article class="wrapped-slide wrapped-slide-finale" data-wrapped-slide="14">
           <div class="wrapped-finale-spark">✦</div><p class="wrapped-kicker">THAT'S A WRAP</p><h2>Happy birthday,<br /><em>Marisa.</em></h2><p>Two planned days, a hundred little moments, and a whole lot of love still to come.</p><div class="wrapped-finale-counts"><span><strong>${uploads.length}</strong> memories</span><span><strong>${rsvps.length}</strong> real responses</span></div><button class="wrapped-replay" type="button" data-wrapped-replay><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> Replay your Wrapped</button></article>
       </div><button class="wrapped-arrow wrapped-arrow-prev" type="button" data-wrapped-prev aria-label="Previous Wrapped slide"><i class="ph ph-arrow-left" aria-hidden="true"></i></button><button class="wrapped-arrow wrapped-arrow-next" type="button" data-wrapped-next aria-label="Next Wrapped slide"><i class="ph ph-arrow-right" aria-hidden="true"></i></button>`;
     node.closest(".wrapped-experience")?.scrollTo(0, 0);
@@ -239,7 +383,9 @@
     const node = $("[data-marisa-wrapped]");
     if (!node || node.dataset.ready) return;
     node.dataset.ready = "true";
-    node.addEventListener("click", (event) => {
+    node.addEventListener("click", async (event) => {
+      const memeVote = event.target.closest("[data-meme-vote]");
+      if (memeVote) { await saveMemeVote(memeVote.dataset.memeAnswer, memeVote.dataset.memeVote, node); renderMarisaWrapped(); return; }
       if (event.target.closest("[data-wrapped-replay]")) { marisaWrappedSlide = 0; renderMarisaWrapped(); return; }
       if (event.target.closest("[data-wrapped-next]")) { marisaWrappedSlide += 1; renderMarisaWrapped(); return; }
       if (event.target.closest("[data-wrapped-prev]")) { marisaWrappedSlide -= 1; renderMarisaWrapped(); }
@@ -302,12 +448,15 @@
     try {
       const mediaLimit = Math.max(6, Math.min(40, Number(config.FIREBASE_MEDIA_LIMIT) || 24));
       const recentMediaQuery = "media?orderBy=%22%24key%22&limitToLast=" + mediaLimit;
-      const [rsvps, notes, media, leaderboard] = await Promise.all([sharedFetch("rsvps"), sharedFetch("notes"), sharedFetch(recentMediaQuery), sharedFetch("leaderboard")]);
+      const [rsvps, notes, media, leaderboard, memeAnswers, memeVotes] = await Promise.all([sharedFetch("rsvps"), sharedFetch("notes"), sharedFetch(recentMediaQuery), sharedFetch("leaderboard"), sharedFetch("memeAnswers"), sharedFetch("memeVotes")]);
       liveRsvps = sharedItems(rsvps);
       sharedNotes = sharedItems(notes);
       sharedMedia = sharedItems(media);
       sharedLeaderboard = sharedItems(leaderboard);
+      sharedMemeAnswers = sharedItems(memeAnswers);
+      sharedMemeVotes = sharedItems(memeVotes);
       renderAttendees(); renderMemories();
+      memeGame?.render();
       if (marisaWrappedMode) renderMarisaWrapped();
     } catch {
       /* The local wall remains usable if shared storage is unavailable. */
@@ -455,8 +604,9 @@
     overlay.className = "party-game";
     overlay.hidden = true;
     overlay.setAttribute("aria-labelledby", "party-game-title");
-    overlay.innerHTML = `<div class="party-game-shell"><div class="party-game-header"><div><p class="party-game-eyebrow">PARTY MODE</p><h1 id="party-game-title">Flappy <em>Marisa.</em></h1><p class="party-game-copy">Help Marisa fly between the birthday memories. Tap, click or press Space to flap.</p></div><div class="party-game-header-actions"><button class="party-game-fullscreen" type="button" data-party-fullscreen aria-label="Open full screen" title="Open full screen"><i class="ph ph-arrows-out" aria-hidden="true"></i></button><button class="party-game-close" type="button" data-party-close aria-label="Close party game"><i class="ph ph-x" aria-hidden="true"></i></button></div></div><div class="party-game-hud"><span>Score <strong data-party-score>0</strong></span><span>Best <strong data-party-best>0</strong></span></div><div class="party-game-board"><canvas width="800" height="500" data-party-canvas aria-label="Flappy Marisa birthday game"></canvas><div class="party-game-board-message" data-party-message>Ready when you are ✦</div></div><div class="party-game-actions"><button class="button button-coral" type="button" data-party-start>Start game</button></div><p class="party-game-status" data-party-status>Fly through the photo gates without touching them.</p><div class="party-game-panels"><form class="party-game-results" data-party-results hidden><p class="party-game-panel-kicker">NICE FLIGHT</p><h2>Your score: <strong data-party-final-score>0</strong></h2><label for="party-player-name">Enter your name to save it</label><div class="party-game-score-row"><input id="party-player-name" data-party-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" required /><button class="button button-coral" type="submit">Save score</button></div><p class="party-game-save-status" data-party-save-status role="status" aria-live="polite"></p></form><section class="party-game-leaderboard" aria-labelledby="party-leaderboard-title"><p class="party-game-panel-kicker">THE HALL OF FAME</p><h2 id="party-leaderboard-title">Leaderboard</h2><ol data-party-leaderboard><li class="party-game-empty">Loading scores…</li></ol></section></div></div>`;
+    overlay.innerHTML = `<div class="party-game-shell"><div class="party-game-header"><div><p class="party-game-eyebrow">PARTY MODE</p><h1 id="party-game-title">Flappy <em>Marisa.</em></h1><p class="party-game-copy">Help Marisa fly between the birthday memories. Tap, click or press Space to flap.</p></div><div class="party-game-header-actions"><button class="party-game-fullscreen" type="button" data-party-fullscreen aria-label="Open full screen" title="Open full screen"><i class="ph ph-arrows-out" aria-hidden="true"></i></button><button class="party-game-close" type="button" data-party-close aria-label="Close party game"><i class="ph ph-x" aria-hidden="true"></i></button></div></div><div class="party-game-hud"><span>Score <strong data-party-score>0</strong></span><span>Best <strong data-party-best>0</strong></span></div><div class="party-game-board"><canvas width="800" height="500" data-party-canvas aria-label="Flappy Marisa birthday game"></canvas><div class="party-game-board-message" data-party-message>Ready when you are ✦</div></div><div class="party-game-actions"><button class="button button-coral" type="button" data-party-start>Start game</button></div><p class="party-game-status" data-party-status>Fly through the photo gates without touching them.</p><div class="party-game-panels"><form class="party-game-results" data-party-results hidden><p class="party-game-panel-kicker">NICE FLIGHT</p><h2>Your score: <strong data-party-final-score>0</strong></h2><label for="party-player-name">Enter your name to save it</label><div class="party-game-score-row"><input id="party-player-name" data-party-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" required /><button class="button button-coral" type="submit">Save score</button></div><p class="party-game-save-status" data-party-save-status role="status" aria-live="polite"></p></form><section class="party-game-leaderboard" aria-labelledby="party-leaderboard-title"><p class="party-game-panel-kicker">THE HALL OF FAME</p><h2 id="party-leaderboard-title">Leaderboard</h2><ol data-party-leaderboard><li class="party-game-empty">Loading scores…</li></ol></section><section class="party-meme-game" data-party-meme-game aria-labelledby="party-meme-title"></section></div></div>`;
     document.body.appendChild(overlay);
+    setupMemeGame();
     const canvas = $("[data-party-canvas]", overlay);
     const context = canvas.getContext("2d");
     const startButton = $("[data-party-start]", overlay);
