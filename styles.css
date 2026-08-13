@@ -693,3 +693,59 @@ body.is-marisa-mode .marisa-view { position: fixed; z-index: 50; inset: 0; displ
   .wrapped-slide.is-active .wrapped-kicker, .wrapped-slide.is-active h1, .wrapped-slide.is-active h2, .wrapped-slide.is-active .wrapped-subtitle, .wrapped-slide.is-active .wrapped-slide-heading > p:last-child, .wrapped-slide.is-active .wrapped-stat, .wrapped-slide.is-active .wrapped-start, .wrapped-slide.is-active .wrapped-replay, .wrapped-slide.is-active .wrapped-cover-art, .wrapped-slide.is-active .wrapped-number, .wrapped-slide.is-active .wrapped-name-chip, .wrapped-slide.is-active .wrapped-quote, .wrapped-slide.is-active .wrapped-upload-card, .wrapped-slide.is-active .wrapped-voice-card, .wrapped-slide.is-active .wrapped-itinerary-day, .wrapped-slide.is-active .wrapped-soundtrack-video { animation: none; opacity: 1; clip-path: none; }
   .wrapped-name-chip, .wrapped-finale-spark { animation: none; }
 }
+
+
+.party-meme-game { margin-top: 68px; padding-top: 52px; border-top: 1px solid rgba(244, 234, 217, .16); }
+.party-meme-heading { max-width: 680px; }
+.party-meme-heading h2 { margin: 0 0 14px; color: var(--cream); font-family: var(--display); font-size: clamp(38px, 6vw, 72px); line-height: .94; font-weight: 400; }
+.party-meme-heading h2 em { color: var(--coral); }
+.party-meme-heading > p:last-child { max-width: 650px; margin: 0; color: rgba(244, 234, 217, .7); font-size: 15px; line-height: 1.55; }
+.party-meme-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; max-width: 760px; margin-top: 24px; padding: 18px; border: 1px solid rgba(244, 234, 217, .18); background: rgba(244, 234, 217, .055); }
+.party-meme-form label, .party-meme-voter label { display: grid; gap: 7px; color: rgba(244, 234, 217, .72); font-size: 11px; font-weight: 700; }
+.party-meme-form label:nth-child(3), .party-meme-form .button { grid-column: 1 / -1; }
+.party-meme-form input, .party-meme-form select, .party-meme-form textarea, .party-meme-voter input { width: 100%; border: 1px solid rgba(244, 234, 217, .28); border-radius: 8px; background: rgba(33, 13, 40, .52); color: var(--cream); font: inherit; }
+.party-meme-form input, .party-meme-form select, .party-meme-voter input { min-height: 42px; padding: 10px 12px; }
+.party-meme-form textarea { min-height: 84px; padding: 11px 12px; resize: vertical; }
+.party-meme-form input::placeholder, .party-meme-form textarea::placeholder, .party-meme-voter input::placeholder { color: rgba(244, 234, 217, .45); }
+.party-meme-form .button { justify-self: start; }
+.party-meme-note, .party-meme-status { min-height: 1.3em; margin: 12px 0 0; color: var(--coral); font-size: 12px; }
+.party-meme-voter { max-width: 420px; margin-top: 18px; padding: 14px; border-left: 2px solid var(--coral); background: rgba(244, 234, 217, .06); }
+.party-meme-voter p { margin: 8px 0 0; color: var(--coral); font-size: 11px; }
+.party-meme-voting { margin-top: 24px; }
+.party-meme-locked { display: grid; gap: 5px; max-width: 560px; padding: 22px; border: 1px dashed rgba(244, 234, 217, .28); color: rgba(244, 234, 217, .7); }
+.party-meme-locked i { color: var(--coral); font-size: 22px; }
+.party-meme-locked strong { color: var(--cream); font-family: var(--display); font-size: 24px; font-weight: 400; }
+.party-meme-locked span { font-size: 12px; }
+.party-meme-answer-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.party-meme-answer-card, .wrapped-meme-card { padding: 18px; border: 1px solid rgba(244, 234, 217, .2); background: rgba(244, 234, 217, .06); }
+.party-meme-answer-card.is-marisa-pick, .wrapped-meme-card.is-marisa-pick { border-color: var(--coral); box-shadow: 0 0 0 1px rgba(237, 121, 93, .32); }
+.party-meme-prompt { margin: 0 0 14px; color: var(--coral); font-size: 10px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+.party-meme-answer-card blockquote, .wrapped-meme-card blockquote { margin: 0; color: var(--cream); font-family: var(--display); font-size: 26px; line-height: 1.05; }
+.party-meme-answer-card footer, .wrapped-meme-card footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 18px; color: rgba(244, 234, 217, .56); font-size: 11px; }
+.party-meme-answer-card footer strong, .wrapped-meme-card footer strong { color: var(--cream); }
+.party-meme-vote-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.party-meme-vote { display: inline-flex; align-items: center; gap: 7px; padding: 8px 11px; border: 1px solid rgba(244, 234, 217, .28); border-radius: 999px; background: transparent; color: var(--cream); font: inherit; font-size: 11px; cursor: pointer; }
+.party-meme-vote:hover, .party-meme-vote:focus-visible { border-color: var(--coral); color: var(--coral); }
+.party-meme-vote span { color: var(--coral); font-weight: 700; }
+.party-meme-vote-marisa.is-selected { border-color: var(--coral); background: var(--coral); color: var(--aubergine); }
+.wrapped-slide-meme { display: block; overflow-y: auto; padding-top: 100px; padding-bottom: 96px; }
+.wrapped-slide-meme .wrapped-slide-heading { max-width: 680px; }
+.wrapped-meme-summary { display: flex; flex-wrap: wrap; gap: 10px; margin: 24px 0 14px; }
+.wrapped-meme-summary span { padding: 8px 12px; border: 1px solid rgba(244, 234, 217, .22); border-radius: 999px; color: rgba(244, 234, 217, .7); font-size: 11px; }
+.wrapped-meme-summary strong { margin-right: 4px; color: var(--coral); font-family: var(--display); font-size: 20px; font-weight: 400; }
+.wrapped-meme-voter { max-width: 360px; margin: 0 0 20px; }
+.wrapped-meme-voter label { color: rgba(244, 234, 217, .68); font-size: 11px; }
+.wrapped-meme-voter input { width: 100%; margin-top: 7px; min-height: 40px; padding: 9px 11px; border: 1px solid rgba(244, 234, 217, .28); border-radius: 8px; background: rgba(244, 234, 217, .08); color: var(--cream); }
+.wrapped-meme-voter p { min-height: 1.2em; margin: 7px 0 0; color: var(--coral); font-size: 11px; }
+.wrapped-meme-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.wrapped-meme-grid .party-meme-vote-marisa { display: inline-flex; }
+.wrapped-meme-grid .party-meme-answer-card { background: rgba(244, 234, 217, .08); }
+
+@media (max-width: 760px) {
+  .party-meme-form, .party-meme-answer-grid, .wrapped-meme-grid { grid-template-columns: 1fr; }
+  .party-meme-form label:nth-child(3), .party-meme-form .button { grid-column: auto; }
+  .party-meme-form .button { width: 100%; justify-content: center; }
+  .party-meme-answer-card blockquote, .wrapped-meme-card blockquote { font-size: 23px; }
+  .wrapped-slide-meme { padding: 78px 24px 90px; }
+  .wrapped-meme-summary { gap: 6px; }
+}
