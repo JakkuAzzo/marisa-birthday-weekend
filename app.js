@@ -106,7 +106,9 @@
     if (!sharedBase) return null;
     const [resourcePath, queryString] = path.split("?");
     const requestUrl = sharedBase + "/" + resourcePath + ".json" + (queryString ? "?" + queryString : "");
-    const response = await fetch(requestUrl, { cache: "no-store", ...options, headers: { "Content-Type": "application/json", ...(options.headers || {}) } });
+    const headers = { ...(options.headers || {}) };
+    if (options.body !== undefined) headers["Content-Type"] = "application/json";
+    const response = await fetch(requestUrl, { cache: "no-store", ...options, headers });
     if (!response.ok) throw new Error("Shared storage returned " + response.status);
     return response.status === 204 ? null : response.json();
   };
