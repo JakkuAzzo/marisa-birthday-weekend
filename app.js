@@ -356,14 +356,14 @@
         <article class="wrapped-slide wrapped-slide-itinerary" data-wrapped-slide="11">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">SATURDAY · 22 AUGUST</p><h2>Kingston<br /><em>after dark.</em></h2><p>A relaxed afternoon meet, then food, drinks and the night out.</p></div><div class="wrapped-itinerary-grid">${itineraryCard(itinerary[1])}</div>
         </article>
-        <article class="wrapped-slide wrapped-slide-meme" data-wrapped-slide="13">
-          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE MARISA MEME AWARDS</p><h2>Everyone’s<br /><em>best answers.</em></h2><p>There are no correct answers here — just the ones that made the group laugh, plus Marisa’s favourite pick.</p></div>
-          <div class="wrapped-meme-summary"><span><strong>\${memeAnswers.length}</strong> answers</span><span><strong>\${memeCrowdLeader ? memeCrowdLeader.count : 0}</strong> votes on the current crowd favourite</span><span><strong>\${memePick ? "1" : "0"}</strong> Marisa pick</span></div>
-          <div class="wrapped-meme-voter"><label for="wrapped-meme-voter-name">Add your name to vote</label><input id="wrapped-meme-voter-name" data-meme-voter-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" /><p data-meme-status role="status" aria-live="polite"></p></div>
-          <div class="wrapped-meme-grid">\${memeCards.replace('<div class="party-meme-answer-grid">', '').replace('</div>', '')}</div>
-        </article>
         <article class="wrapped-slide wrapped-slide-leaderboard" data-wrapped-slide="12">
           <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE HALL OF FAME</p><h2>Marisa’s<br /><em>party scores.</em></h2><p>The highest score from each player, synced from the birthday game.</p></div><ol class="wrapped-leaderboard">${gameScoreCards}</ol>
+        </article>
+        <article class="wrapped-slide wrapped-slide-meme" data-wrapped-slide="13">
+          <div class="wrapped-slide-heading"><p class="wrapped-kicker">THE MARISA MEME AWARDS</p><h2>Everyone’s<br /><em>best answers.</em></h2><p>There are no correct answers here — just the ones that made the group laugh, plus Marisa’s favourite pick.</p></div>
+          <div class="wrapped-meme-summary"><span><strong>${memeAnswers.length}</strong> answers</span><span><strong>${memeCrowdLeader ? memeCrowdLeader.count : 0}</strong> votes on the current crowd favourite</span><span><strong>${memePick ? "1" : "0"}</strong> Marisa pick</span></div>
+          <div class="wrapped-meme-voter"><label for="wrapped-meme-voter-name">Add your name to vote</label><input id="wrapped-meme-voter-name" data-meme-voter-name type="text" maxlength="24" autocomplete="nickname" placeholder="Your name" /><p data-meme-status role="status" aria-live="polite"></p></div>
+          <div class="wrapped-meme-grid">${memeCards.replace(/<div class="party-meme-answer-grid">/, "").replace(/<\/div>$/, "")}</div>
         </article>
         <article class="wrapped-slide wrapped-slide-finale" data-wrapped-slide="14">
           <div class="wrapped-finale-spark">✦</div><p class="wrapped-kicker">THAT'S A WRAP</p><h2>Happy birthday,<br /><em>Marisa.</em></h2><p>Two planned days, a hundred little moments, and a whole lot of love still to come.</p><div class="wrapped-finale-counts"><span><strong>${uploads.length}</strong> memories</span><span><strong>${rsvps.length}</strong> real responses</span></div><button class="wrapped-replay" type="button" data-wrapped-replay><i class="ph ph-arrow-counter-clockwise" aria-hidden="true"></i> Replay your Wrapped</button></article>
