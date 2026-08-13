@@ -254,7 +254,7 @@
     const sameAnswer = (item) => String(item.name || "").trim().toLowerCase() === name.toLowerCase() && item.promptId === promptId;
     write("marisa-meme-answers", [...localAnswers.filter((item) => !sameAnswer(item)), answer]);
     let synced = false;
-    try { synced = sharedBase ? await pushShared("memeAnswers", answer) : false; } catch { /* local answer remains available */ }
+    try { synced = sharedBase ? await pushShared("notes", { ...answer, type: "memeAnswer" }) : false; } catch { /* local answer remains available */ }
     write("marisa-meme-player-name", name);
     memeStatusMessage = synced ? "Saved to the shared birthday room ✦ Moving to the next prompt." : "Saved on this device — shared sync was unavailable. Moving to the next prompt.";
     renderMemeGame(root);
@@ -501,13 +501,14 @@
     try {
       const mediaLimit = Math.max(6, Math.min(40, Number(config.FIREBASE_MEDIA_LIMIT) || 24));
       const recentMediaQuery = "media?orderBy=%22%24key%22&limitToLast=" + mediaLimit;
-      const [rsvps, notes, media, leaderboard, memeAnswers, memeVotes] = await Promise.all([sharedFetch("rsvps"), sharedFetch("notes"), sharedFetch(recentMediaQuery), sharedFetch("leaderboard"), sharedFetch("memeAnswers"), sharedFetch("memeVotes")]);
+      const [rsvps, notes, media, leaderboard] = await Promise.all([sharedFetch("rsvps"), sharedFetch("notes"), sharedFetch(recentMediaQuery), sharedFetch("leaderboard")]);
       liveRsvps = sharedItems(rsvps);
-      sharedNotes = sharedItems(notes);
+      const sharedNoteItems = sharedItems(notes);
+      sharedNotes = sharedNoteItems.filter((item) => !["memeAnswer", "memeVote", "memeAnswerTest"].includes(item.type));
+      sharedMemeAnswers = sharedNoteItems.filter((item) => item.type === "memeAnswer");
+      sharedMemeVotes = sharedNoteItems.filter((item) => item.type === "memeVote");
       sharedMedia = sharedItems(media);
       sharedLeaderboard = sharedItems(leaderboard);
-      sharedMemeAnswers = sharedItems(memeAnswers);
-      sharedMemeVotes = sharedItems(memeVotes);
       renderAttendees(); renderMemories();
       memeGame?.render();
       if (marisaWrappedMode) renderMarisaWrapped();
