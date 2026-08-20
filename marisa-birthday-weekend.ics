@@ -55,29 +55,31 @@ BEGIN:VEVENT
 UID:marisa-birthday-6@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260822T160000
-DTEND;TZID=Europe/London:20260822T180000
+DTEND;TZID=Europe/London:20260822T190000
 SUMMARY:Wetherspoons meet
-DESCRIPTION:The Kings Tun Wetherspoons, Kingston upon Thames
-LOCATION:The Kings Tun, 153-157 Clarence Street, Kingston upon Thames, KT1 1QT
-URL:https://www.jdwetherspoon.com/pubs/the-kings-tun-kingston-upon-thames/
+DESCRIPTION:The London and South Western Wetherspoons beside Clapham Junction
+LOCATION:The London and South Western, 276-288 Lavender Hill, Clapham Junction, SW11 1LJ
+URL:https://www.jdwetherspoon.com/pubs/the-london-and-south-western-battersea/
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-6b@birthday
 DTSTAMP:20260801T120000Z
-DTSTART;TZID=Europe/London:20260822T180000
-DTEND;TZID=Europe/London:20260822T200000
-SUMMARY:Live music + DJ at O'Neill's
-DESCRIPTION:Saturday live music and DJ at O'Neill's Kingston upon Thames
-LOCATION:O'Neill's, 3 Eden Street, Kingston upon Thames, KT1 1BQ
-URL:https://oneills-kingston-upon-thames.designmynight.com/
+DTSTART;TZID=Europe/London:20260822T190000
+DTEND;TZID=Europe/London:20260822T220000
+SUMMARY:Meet at Infernos
+DESCRIPTION:Meet at Infernos before the nightclub starts
+LOCATION:Infernos Nightclub, 146 Clapham High Street, London, SW4 7UH
+URL:https://www.google.com/maps/search/?api=1&query=Infernos+Nightclub+Clapham
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-7@birthday
 DTSTAMP:20260801T120000Z
-DTSTART;TZID=Europe/London:20260822T200000
+DTSTART;TZID=Europe/London:20260822T220000
 DTEND;TZID=Europe/London:20260822T235900
-SUMMARY:Continue the night out
-DESCRIPTION:Kingston upon Thames
+SUMMARY:Infernos nightclub
+DESCRIPTION:Infernos nightclub in Clapham
+LOCATION:Infernos Nightclub, 146 Clapham High Street, London, SW4 7UH
+URL:https://www.infernos.co.uk/
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-8@birthday
