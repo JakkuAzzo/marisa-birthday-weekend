@@ -36,20 +36,12 @@ SUMMARY:Park picnic at Collingwood Park
 DESCRIPTION:Collingwood Park, Sutton - indoor backup if raining
 END:VEVENT
 BEGIN:VEVENT
-UID:marisa-birthday-4@birthday
-DTSTAMP:20260801T120000Z
-DTSTART;TZID=Europe/London:20260821T180000
-DTEND;TZID=Europe/London:20260821T190000
-SUMMARY:Settle in + reset
-DESCRIPTION:Sutton
-END:VEVENT
-BEGIN:VEVENT
 UID:marisa-birthday-5@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260821T190000
 DTEND;TZID=Europe/London:20260821T230000
 SUMMARY:Cake, food, gifts + games
-DESCRIPTION:Sutton
+DESCRIPTION:Collingwood Park, Sutton
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-6@birthday
@@ -66,10 +58,10 @@ UID:marisa-birthday-6b@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260822T190000
 DTEND;TZID=Europe/London:20260822T220000
-SUMMARY:Meet at Infernos
-DESCRIPTION:Meet at Infernos before the nightclub starts
-LOCATION:Infernos Nightclub, 146 Clapham High Street, London, SW4 7UH
-URL:https://www.google.com/maps/search/?api=1&query=Infernos+Nightclub+Clapham
+SUMMARY:Meet at ARCH Clapham
+DESCRIPTION:Meet at ARCH Clapham before heading to Infernos
+LOCATION:ARCH Clapham
+URL:https://archclapham.co.uk
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-7@birthday
