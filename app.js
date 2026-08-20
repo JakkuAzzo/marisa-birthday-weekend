@@ -362,7 +362,7 @@
     const archiveChapterFour = archivePhotos.slice(18, 24);
     const itinerary = [
       { date: "FRI · 21 AUG", label: "Main birthday day", items: [["11:00", "Meet in Stratford", "The Breakfast Club Stratford"], ["12:00", "The Breakfast Club reservation", "The Breakfast Club Stratford"], ["13:30–14:30", "Travel to Sutton", "Sutton"], ["14:30–18:00", "Park picnic at Collingwood Park", "Collingwood Park, Sutton · indoor backup if raining"], ["18:00", "Settle in + reset", "Sutton"], ["19:00", "Cake, food, gifts + games", "Sutton"]] },
-      { date: "SAT · 22 AUG", label: "Kingston pub & night out", items: [["16:00", "Pub or restaurant meet", "Kingston upon Thames"], ["20:00", "Night out", "Location to be confirmed"]] }
+      { date: "SAT · 22 AUG", label: "Kingston pub & night out", items: [["16:00", "Wetherspoons meet", "The Kings Tun, Kingston upon Thames"], ["18:00", "Live music + DJ at O'Neill's", "O'Neill's Kingston upon Thames"], ["20:00", "Continue the night out", "Kingston upon Thames"]] }
     ];
     const itineraryCard = (day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`;
     const gameScores = rankGameScores([...sharedLeaderboard, ...read("marisa-party-leaderboard", [])]);
@@ -577,8 +577,9 @@
     ["20260821T143000", "20260821T180000", "Park picnic at Collingwood Park", "Collingwood Park, Sutton · indoor backup if raining"],
     ["20260821T180000", "20260821T190000", "Settle in + reset", "Sutton"],
     ["20260821T190000", "20260821T230000", "Cake, food, gifts + games", "Sutton"],
-    ["20260822T160000", "20260822T180000", "Pub or restaurant meet", "Kingston upon Thames"],
-    ["20260822T200000", "20260822T235900", "Night out", "Kingston upon Thames · location to be confirmed"],
+    ["20260822T160000", "20260822T180000", "Wetherspoons meet", "The Kings Tun, 153–157 Clarence Street, Kingston upon Thames, KT1 1QT"],
+    ["20260822T180000", "20260822T200000", "Live music + DJ at O'Neill's", "O'Neill's Kingston upon Thames, 3 Eden Street, Kingston upon Thames, KT1 1BQ"],
+    ["20260822T200000", "20260822T235900", "Continue the night out", "Kingston upon Thames"],
     ["20260824T100000", "20260824T120000", "Slow morning + goodbyes", "Check-out day"]
   ];
   const makeIcs = () => {
@@ -1280,8 +1281,9 @@
         { time: "19:00–23:00", title: "Cake, food, gifts + games", location: "Sutton" }
       ] },
       { day: "Saturday 22 August", label: "Kingston pub & night out", date: "SAT · 22 AUG", items: [
-        { time: "16:00–18:00", title: "Pub or restaurant meet", location: "Kingston upon Thames", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames" },
-        { time: "20:00–23:59", title: "Night out", location: "Kingston upon Thames · location to be confirmed", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames+restaurants+bars" }
+        { time: "16:00–18:00", title: "Wetherspoons meet", location: "The Kings Tun, Kingston upon Thames", directions: "https://www.jdwetherspoon.com/pubs/the-kings-tun-kingston-upon-thames/" },
+        { time: "18:00–20:00", title: "Live music + DJ at O'Neill's", location: "O'Neill's Kingston upon Thames", directions: "https://oneills-kingston-upon-thames.designmynight.com/" },
+        { time: "20:00–23:59", title: "Continue the night out", location: "Kingston upon Thames", directions: "https://www.google.com/maps/search/?api=1&query=Kingston+upon+Thames+restaurants+bars" }
       ] },
     ];
     const modal = document.createElement("div");
