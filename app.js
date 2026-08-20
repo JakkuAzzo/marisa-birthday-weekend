@@ -361,8 +361,8 @@
     const archiveChapterThree = archivePhotos.slice(12, 18);
     const archiveChapterFour = archivePhotos.slice(18, 24);
     const itinerary = [
-      { date: "FRI · 21 AUG", label: "Main birthday day", items: [["11:00", "Meet in Stratford", "The Breakfast Club Stratford"], ["12:00", "The Breakfast Club reservation", "The Breakfast Club Stratford"], ["13:30–14:30", "Travel to Sutton", "Sutton"], ["14:30–18:00", "Park picnic at Collingwood Park", "Collingwood Park, Sutton · indoor backup if raining"], ["19:00–23:00", "Cake, food, gifts + games", "Collingwood Park, Sutton"]] },
-      { date: "SAT · 22 AUG", label: "Clapham pub & night out", items: [["16:00", "Wetherspoons meet", "The London and South Western, Clapham Junction"], ["19:00", "Meet at ARCH Clapham", "ARCH Clapham"], ["22:00", "Infernos nightclub", "Infernos Nightclub, Clapham"]] }
+      { date: "FRI · 21 AUG", label: "Main birthday day", items: [["11:00", "Meet in Stratford", "The Breakfast Club Stratford"], ["12:00", "The Breakfast Club reservation", "The Breakfast Club Stratford"], ["13:30–15:00", "Travel to Sutton", "Sutton"], ["15:00–21:00", "Park picnic, cake, food, gifts + games", "Collingwood Park, Sutton (indoor backup if raining)"]] },
+      { date: "SAT · 22 AUG", label: "Clapham pub & night out", items: [["16:00", "Wetherspoons pre-drinks", "The London and South Western, Clapham Junction"], ["19:00", "Meet at ARCH Clapham", "ARCH Clapham"], ["22:00", "Infernos nightclub", "Infernos Nightclub, Clapham"]] }
     ];
     const itineraryCard = (day) => `<article class="wrapped-itinerary-day"><p class="wrapped-itinerary-date">${escapeHtml(day.date)}</p><h3>${escapeHtml(day.label)}</h3><div>${day.items.map(([time, title, location]) => `<div class="wrapped-itinerary-item"><time>${escapeHtml(time)}</time><span><strong>${escapeHtml(title)}</strong><small>${escapeHtml(location)}</small></span></div>`).join("")}</div></article>`;
     const gameScores = rankGameScores([...sharedLeaderboard, ...read("marisa-party-leaderboard", [])]);
@@ -573,10 +573,9 @@
   const calendarEvents = [
     ["20260821T110000", "20260821T120000", "Meet in Stratford", "Arrive near The Breakfast Club Stratford before the reservation"],
     ["20260821T120000", "20260821T133000", "The Breakfast Club reservation", "The Breakfast Club Stratford · party of six"],
-    ["20260821T133000", "20260821T143000", "Travel to Sutton", "Head to Sutton after breakfast"],
-    ["20260821T143000", "20260821T180000", "Park picnic at Collingwood Park", "Collingwood Park, Sutton · indoor backup if raining"],
-    ["20260821T190000", "20260821T230000", "Cake, food, gifts + games", "Collingwood Park, Sutton"],
-    ["20260822T160000", "20260822T190000", "Wetherspoons meet", "The London and South Western, 276–288 Lavender Hill, Clapham Junction, SW11 1LJ"],
+    ["20260821T133000", "20260821T150000", "Travel to Sutton", "Head to Sutton after breakfast"],
+    ["20260821T150000", "20260821T210000", "Park picnic, cake, food, gifts + games", "Collingwood Park, Sutton (indoor backup if raining)"],
+    ["20260822T160000", "20260822T190000", "Wetherspoons pre-drinks", "The London and South Western, 276–288 Lavender Hill, Clapham Junction, SW11 1LJ"],
     ["20260822T190000", "20260822T220000", "Meet at ARCH Clapham", "ARCH Clapham"],
     ["20260822T220000", "20260822T235900", "Infernos nightclub", "Infernos Nightclub, 146 Clapham High Street, London, SW4 7UH"],
     ["20260824T100000", "20260824T120000", "Slow morning + goodbyes", "Check-out day"]
@@ -1274,12 +1273,11 @@
       { day: "Friday 21 August", label: "Main birthday day", date: "FRI · 21 AUG", items: [
         { time: "11:00–12:00", title: "Meet in Stratford", location: "The Breakfast Club Stratford", directions: "https://www.google.com/maps/search/?api=1&query=The+Breakfast+Club+Stratford+London" },
         { time: "12:00–13:30", title: "The Breakfast Club reservation", location: "The Breakfast Club Stratford · party of six", directions: "https://www.google.com/maps/search/?api=1&query=The+Breakfast+Club+Stratford+London" },
-        { time: "13:30–14:30", title: "Travel to Sutton", location: "Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+London" },
-        { time: "14:30–18:00", title: "Park picnic at Collingwood Park", location: "Collingwood Park, Sutton · indoor backup if raining", directions: "https://www.google.com/maps/search/?api=1&query=Collingwood+Park+Sutton+London" },
-        { time: "19:00–23:00", title: "Cake, food, gifts + games", location: "Collingwood Park, Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Collingwood+Park+Sutton+London" }
+        { time: "13:30–15:00", title: "Travel to Sutton", location: "Sutton", directions: "https://www.google.com/maps/search/?api=1&query=Sutton+London" },
+        { time: "15:00–21:00", title: "Park picnic, cake, food, gifts + games", location: "Collingwood Park, Sutton (indoor backup if raining)", directions: "https://www.google.com/maps/search/?api=1&query=Collingwood+Park+Sutton+London" }
       ] },
       { day: "Saturday 22 August", label: "Clapham pub & night out", date: "SAT · 22 AUG", items: [
-        { time: "16:00–19:00", title: "Wetherspoons meet", location: "The London and South Western, Clapham Junction", directions: "https://www.jdwetherspoon.com/pubs/the-london-and-south-western-battersea/" },
+        { time: "16:00–19:00", title: "Wetherspoons pre-drinks", location: "The London and South Western, Clapham Junction", directions: "https://www.jdwetherspoon.com/pubs/the-london-and-south-western-battersea/" },
         { time: "19:00–22:00", title: "Meet at ARCH Clapham", location: "ARCH Clapham", directions: "https://archclapham.co.uk" },
         { time: "22:00–23:59", title: "Infernos nightclub", location: "Infernos Nightclub, Clapham", directions: "https://www.infernos.co.uk/" }
       ] },

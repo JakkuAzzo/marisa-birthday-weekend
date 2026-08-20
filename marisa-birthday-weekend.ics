@@ -23,32 +23,24 @@ BEGIN:VEVENT
 UID:marisa-birthday-2@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260821T133000
-DTEND;TZID=Europe/London:20260821T143000
+DTEND;TZID=Europe/London:20260821T150000
 SUMMARY:Travel to Sutton
 DESCRIPTION:Head to Sutton after breakfast
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-3@birthday
 DTSTAMP:20260801T120000Z
-DTSTART;TZID=Europe/London:20260821T143000
-DTEND;TZID=Europe/London:20260821T180000
-SUMMARY:Park picnic at Collingwood Park
-DESCRIPTION:Collingwood Park, Sutton - indoor backup if raining
-END:VEVENT
-BEGIN:VEVENT
-UID:marisa-birthday-5@birthday
-DTSTAMP:20260801T120000Z
-DTSTART;TZID=Europe/London:20260821T190000
-DTEND;TZID=Europe/London:20260821T230000
-SUMMARY:Cake, food, gifts + games
-DESCRIPTION:Collingwood Park, Sutton
+DTSTART;TZID=Europe/London:20260821T150000
+DTEND;TZID=Europe/London:20260821T210000
+SUMMARY:Park picnic, cake, food, gifts + games
+DESCRIPTION:Collingwood Park, Sutton (indoor backup if raining)
 END:VEVENT
 BEGIN:VEVENT
 UID:marisa-birthday-6@birthday
 DTSTAMP:20260801T120000Z
 DTSTART;TZID=Europe/London:20260822T160000
 DTEND;TZID=Europe/London:20260822T190000
-SUMMARY:Wetherspoons meet
+SUMMARY:Wetherspoons pre-drinks
 DESCRIPTION:The London and South Western Wetherspoons beside Clapham Junction
 LOCATION:The London and South Western, 276-288 Lavender Hill, Clapham Junction, SW11 1LJ
 URL:https://www.jdwetherspoon.com/pubs/the-london-and-south-western-battersea/
